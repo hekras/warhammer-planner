@@ -1,5 +1,6 @@
 var path = require('path');
 const express = require('express');
+const PORT = process.env.PORT || 8000
 
 var app = express();
 var fs = require('fs');
@@ -288,6 +289,6 @@ app.get('*', function (req, res) {
     });
 });
 
-app.listen(8000, function () {
-    console.log('Listening on http://localhost:8000/');
+app.listen(PORT, function () {
+    console.log('Listening on ${ PORT }');
 });
