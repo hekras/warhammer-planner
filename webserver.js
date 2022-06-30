@@ -1,11 +1,37 @@
 var path = require('path');
 const express = require('express');
-const PORT = process.env.PORT || 8000
-
-var app = express();
 var fs = require('fs');
 
+const PORT = process.env.PORT || 8000
+var app = express();
+app.use(express.json());
+
+var db=[];
 var dir = __dirname; //var dir = path.join(__dirname, "/public");
+
+
+function init_db(){
+    var db_filename = path.join(__dirname,"/databasen.json");
+    console.log(db_filename);
+    fs.readFile(db_filename, 'utf8', function (err, data) {
+        if (!err){
+            db = JSON.parse(data);
+        }
+        else{
+            names.forEach(element => {
+                if (element.name != ""){
+                    db.push({
+                        "user": element.name,
+                        "userid": element.id,
+                        "ids":[]
+                    });
+                }
+            });
+        }
+    });
+
+
+}
 
 function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, text, verticalallign, onclick, oninput)
 {
@@ -194,22 +220,47 @@ var mime = {
     svg: 'image/svg+xml',
     js: 'application/javascript'
 };
+
 const dag = new Date();
+var names = [
+    {"name":"Glen", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
+    {"name":"Bo V", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
+    {"name":"Bo G", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
+    {"name":"Jens", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
+    {"name":"Henryk", "id":"6fd05639-3d88-4ca0-9491-832044d57b40"}, 
+    {"name":"Peter", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
+    {"name":"Stefan", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
+    {"name":"Torben", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
+    {"name":"Heatmap", "id":"6e676887-2679-4285-950b-0a2139fdccae"},
+    {"name":"", "id":"current_user"},
+
+];
+
 
 function renderCalendar(res, year){
     var str = e('init', '', 0, 0, 0, 0, 0, '', '', '', '', '');
     var xpos = 2;
-    str += e('bround', 'previous-year', xpos, 5, 32, 32, 29, 0, '', '&#10094;', 'c', 'setyear(' + (parseInt(year,10) - 1) + ')', '');
+//    str += e('bround', 'previous-year', xpos, 5, 32, 32, 29, 0, '', '&#10094;', 'c', 'setyear(' + (parseInt(year,10) - 1) + ')', '');
     xpos += 35;
     str += e('l', '', xpos, 5, 90, 32, 29, 0, '', year, 'c', '', '');
     xpos += 92;
-    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
-    str += e('end', '', 0, 0, 0, 0, 0, '', '', '', '', '');
+//    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
+    xpos += 100;
+    names.forEach(element => {
+        if (element.name != ""){
+            str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', element.name, 'c', 'setUser(this)', '');
+        }
+        else
+        {
+            str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', "none", 'c', '', '');
+        }
+        xpos += 92;
+    });
 
     for (var m = 1; m < 13; m++) {
 
         var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-        var kd = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+        var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
     
         var hw = 60;
         var xoff = 285 * ((m - 1) % 4);
@@ -224,7 +275,7 @@ function renderCalendar(res, year){
             var ypos = 50;
             var xpos = 2 + dd * 33;
             var id = 'timestamp-' + year + '-' + m + '-' + 0 + '-' + 0 + '-' + dd;
-            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 32, 10, 1, 'solid black', kd[dd - 1], 'c', 'toggledayofweek(this)', '');
+            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 32, 12, 1, 'solid black', kd[dd - 1], 'c', 'toggledayofweek(this)', '');
         }
 
 // rendering small calendar
@@ -240,12 +291,12 @@ function renderCalendar(res, year){
             if (weekchange) {
                 weeknumber = dag.getWeek();
                 var id = 'timestamp-' + year + '-' + 0 + '-' + 0 + '-' + weeknumber + '-' + 0;
-                str += e('bday', id, 2 + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', weeknumber, 'c', 'toggleweek(this)', '');
+                str += e('bday', id, 2 + xoff, ypos + yoff, 32, 31, 12, 1, 'solid black', weeknumber, 'c', 'toggleweek(this)', '');
                 weekchange = false;
             }
             var id = 'timestamp-' + year + '-' + m + '-' + dd + '-' + weeknumber + '-' + sd;
             xpos = 2 + sd * 33;
-            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 10, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
+            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
 
             switch(sd){
                 case 7: // sunday
@@ -258,15 +309,22 @@ function renderCalendar(res, year){
         }
     }    
 
+    str += e('end', '', 0, 0, 0, 0, 0, '', '', '', '', '');
     res.send(str);
 }
 
+init_db();
 
 app.get('/setyear', function (req, res) {
     renderCalendar(res, req.query.year);
 });
 
 app.get('/wp', function (req, res) {
+    year = '2022';
+    renderCalendar(res, year);
+});
+
+app.get('/', function (req, res) {
     year = '2022';
     renderCalendar(res, year);
 });
@@ -289,6 +347,39 @@ app.get('*', function (req, res) {
     });
 });
 
-app.listen(PORT, function () {
-    console.log('Listening on ${ PORT }');
+app.post('/ajaxuser', function(req, res){
+    res.send(db);
 });
+
+app.post('/ajaxtoggledays', function(req, res){
+    var update = req.body;
+//    console.log(update.ids);
+
+    var user_record = null; 
+    db.forEach(e => {
+        if (e.userid === update.userid){
+            user_record = e;
+        }
+    });
+
+    if (user_record != null){
+        if (update.command === ''){
+            update.ids.forEach(e => {
+                user_record.ids = user_record.ids.filter(a => e!== a);
+            });
+        }
+        else{
+            user_record.ids = user_record.ids.concat(update.ids);
+        }
+        res.send(db);
+        console.log(update);
+        console.log(user_record);
+//        console.log(update.ids);
+}
+  //  console.log(JSON.stringify(db));
+});
+
+app.listen(PORT, function () {
+    console.log(`Listening on ${ PORT }`);
+});
+

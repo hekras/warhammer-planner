@@ -17,129 +17,165 @@ function setyear(y) {
     window.open("/setyear?year=" + y, '_self');
 }
 
-function setcalendar(e) {
-    for (var p = 1; p < 3; p++) {
-        document.getElementById('calendar-' + p).style.background = '';
-    }
-    e.style.background = _graybg;
-    current_parent = e.id;
-}
-
-function setchild(e) {
-    for (var p = 1; p < 2; p++) {
-        document.getElementById('child-' + p).style.background = '';
-    }
-    e.style.background = _graybg;
-    current_child = e.id;
-
-    for (var i = 0; i < alldays.length; i++) {
-        var s = alldays[i].getAttribute(current_child);
-        alldays[i].style.background = ((s === null) || (s === 'false')) ? '' : _graybg;
-    }
-}
-
 function initdays() {
     alldays = [];
 
     for (var m = 1; m < 13; m++) {
         var es = document.querySelectorAll('[month="' + m + '"]');
-        for (var d = 0; d < es.length; d++) {
-            var day = es[d].getAttribute('day');
-            if (day != '0') {
-                alldays.push(es[d]);
-
-                var s = localStorage.getItem(es[d].id);
-                if (s != null) {
-                    console.log(es[d].id);
-                    var ss = s.split('=')
-                    es[d].setAttribute(ss[0], ss[1]);
-                }
+        es.forEach(e => {
+            var day = e.getAttribute('day');
+            if (day != 0){
+                alldays.push(e.id);
             }
-        }
+        });
     }
 }
 
 function toggleday(e) {
-    e.style.background = (e.style.background === '') ? _graybg : '';
-    if (e.style.background === '') {
-        e.setAttribute(current_child, 'false');
-        localStorage.removeItem(e.id);
-    }
-    else {
-        e.setAttribute(current_child, current_parent);
-        localStorage.setItem(e.id, current_child + '=' + current_parent);
-    } 
-}
-
-function toggledays(count, els) {
-    var bg = (count > 0) ? '' : _graybg;
-    var newstatus = (count > 0) ? 'false' : current_parent;
-
-    for (var i = 0; i < els.length; i++) {
-        els[i].style.background = bg;
-        els[i].setAttribute(current_child, newstatus);
-        if (newstatus === 'false') {
-            localStorage.removeItem(els[i].id);
-        }
-        else {
-            localStorage.setItem(els[i].id, current_child + '=' + current_parent);
-        }
-    }
+    var ids = [];
+    var count = 0;
+    count = (e.style.background != '') ? count + 1 : count;
+    ids.push(e.id);
+    ajaxtoggledays(count, ids);
 }
 
 function togglemonth(e) {
     var month = e.getAttribute('month');
     var es = document.querySelectorAll('[month="' + month + '"]');
-    var els = [];
+    var ids = [];
 
     var count = 0;
-    for (var i = 0; i < es.length; i++) {
-        if (es[i].getAttribute('day') != '0') {
-            count = (es[i].style.background != '') ? count + 1 : count;
-            els.push(es[i]);
+    es.forEach(element => {
+        if (element.getAttribute('day') != '0') {
+            count = (element.style.background != '') ? count + 1 : count;
+            ids.push(element.id);
         }
-    }
-    toggledays(count, els);
-    e.style.background = '';
+    });
+    ajaxtoggledays(count, ids);
 }
 
 function toggleweek(e) {
     var week = e.getAttribute('week');
     var es = document.querySelectorAll('[week="' + week + '"]');
-    var els = [];
+    var ids = [];
 
     var count = 0;
-    for (var i = 0; i < es.length; i++) {
-        if (es[i].getAttribute('day') != '0') {
-            count = (es[i].style.background != '') ? count + 1 : count;
-            els.push(es[i]);
+    es.forEach(element => {
+        if (element.getAttribute('day') != '0') {
+            count = (element.style.background != '') ? count + 1 : count;
+            ids.push(element.id);
         }
-    }
-    toggledays(count, els);
-    e.style.background = '';
+    });
+    ajaxtoggledays(count, ids);
 }
 
 function toggledayofweek(e) {
     var month = e.getAttribute('month');
     var es = document.querySelectorAll('[month="' + month + '"]');
     var dayofweek = e.getAttribute('dayofweek');
-    var els = [];
+    var ids = [];
 
     var count = 0;
-    for (var i = 0; i < es.length; i++) {
-        if ((es[i].getAttribute('day') != '0') &&
-            (es[i].getAttribute('dayofweek') === dayofweek)) {
-            count = (es[i].style.background != '') ? count + 1 : count;
-            els.push(es[i]);
+    es.forEach(element => {
+        if ((element.getAttribute('day') != '0') &&
+            (element.getAttribute('dayofweek') === dayofweek)) {
+            count = (element.style.background != '') ? count + 1 : count;
+            ids.push(element.id);
         }
+    });
+    ajaxtoggledays(count, ids);
+}
+
+function setUser(element) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+//             document.getElementById("demo").innerHTML = this.responseText;
+
+            var oldel = document.getElementById(document.getElementById("current_user").innerText);
+            if (oldel != null){
+                oldel.style.background = "";
+            }
+            document.getElementById("current_user").innerText = element.id;
+            document.getElementById(element.id).style.background = _greenbg;
+
+            var db = JSON.parse(this.responseText);
+
+            var user_record = null; 
+            db.forEach(e => {
+                if (e.userid === element.id){
+                    user_record = e;
+                }
+            });
+
+            if (user_record != null){
+                alldays.forEach(id => {
+                    document.getElementById(id).style.background = (user_record.ids.indexOf(id)===-1) ? '': _greenbg;
+                });
+//                console.log( '=======================' );
+//                console.log( JSON.stringify(user_record) );
+            }
+        }
+    };
+ 
+    xhttp.open("POST", "/ajaxuser", true);
+    //xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send();
+}
+
+function ajaxtoggledays(count, ids) {
+    var current_user_id = document.getElementById("current_user").innerText;
+    if (current_user_id != "none"){
+//        console.log("count="+count);
+        var bg = (count > 0) ? '' : _graybg;
+
+        /*
+        ids.forEach(element => {
+            document.getElementById(element).style.background = bg;
+        });
+*/
+
+        var update = {
+            "userid": current_user_id,
+            "command": bg,
+            "ids": ids
+        };
+
+//        console.log(JSON.stringify(update));
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+    //             document.getElementById("demo").innerHTML = this.responseText;
+                var db = JSON.parse(this.responseText);
+
+                var user_record = null; 
+                db.forEach(e => {
+                    if (e.userid === current_user_id){
+                        user_record = e;
+                    }
+                });
+
+                if (user_record != null){
+                    alldays.forEach(id => {
+                        document.getElementById(id).style.background = (user_record.ids.indexOf(id)===-1) ? '': _greenbg;
+                    });
+  //                  console.log( '=======================' );
+  //                  console.log( JSON.stringify(user_record) );
+                }
+            }
+        };
+     
+        xhttp.open("POST", "/ajaxtoggledays", true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify(update));
     }
-    toggledays(count, els);
-    e.style.background = '';
+
 }
 
 /***********************************
 // main - program starts here !!!!!!
 ************************************/
-//initdays();
+initdays();
 //setcalendar(document.getElementById(current_parent));
 //setchild(document.getElementById(current_child));
