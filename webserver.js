@@ -59,7 +59,6 @@ function update_heat(){
         });
         heatmap.push(rec);
     });
-    console.log(JSON.stringify(heatmap));
 }
 
 function init_db(){
@@ -88,7 +87,6 @@ function write_db(){
         if (err){
             console.log("db write didnt work!!");
         }
-        console.log('complete');
     });
 }
 
@@ -346,7 +344,6 @@ function renderCalendar(res, year, userid){
     valid_months.sort(function(a, b) {
         return a - b;
       });
-    console.log(JSON.stringify(valid_months));
 
     var mm = 1;
     valid_months.forEach(m => {
@@ -424,7 +421,6 @@ init_db();
 app.get('/', function (req, res) {
     year = '2022';
     var userid = (req.query.userid != null) ? req.query.userid : names[0].id;
-    console.log("userid:" + userid);
 
     renderCalendar(res, year, userid);
 });
@@ -441,7 +437,6 @@ app.get('*', function (req, res) {
         s.pipe(res);
     });
     s.on('error', function () {
-        console.log(file);
         res.set('Content-Type', 'text/plain');
         res.status(404).end('Not found');
     });
@@ -480,5 +475,6 @@ app.post('/ajaxtoggledays', function(req, res){
 
 app.listen(PORT, function () {
     console.log(`Listening on ${ PORT }`);
+
 });
 
