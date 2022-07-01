@@ -6,9 +6,33 @@ const PORT = process.env.PORT || 8000
 var app = express();
 app.use(express.json());
 
-var db=[];
 var dir = __dirname; //var dir = path.join(__dirname, "/public");
+var mime = {
+    html: 'text/html',
+    txt: 'text/plain',
+    css: 'text/css',
+    gif: 'image/gif',
+    jpg: 'image/jpeg',
+    png: 'image/png',
+    svg: 'image/svg+xml',
+    js: 'application/javascript'
+};
 
+const dag = new Date();
+
+var names = [
+    {"name":"Glen", "role":"✵", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
+    {"name":"Bo V", "role":"", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
+    {"name":"Bo G", "role":"", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
+    {"name":"Jens", "role":"", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
+    {"name":"Henryk", "role":"", "id":"6fd05639-3d88-4ca0-9491-832044d57b40"}, 
+    {"name":"Peter", "role":"", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
+    {"name":"Stefan", "role":"", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
+    {"name":"Torben", "role":"", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
+];
+
+var db=[];
+var current_user = names[0];
 
 function init_db(){
     var db_filename = path.join(__dirname,"/databasen.json");
@@ -210,32 +234,6 @@ Date.prototype.getWeek = function() {
                         - 3 + (week1.getDay() + 6) % 7) / 7);
 }
 
-var mime = {
-    html: 'text/html',
-    txt: 'text/plain',
-    css: 'text/css',
-    gif: 'image/gif',
-    jpg: 'image/jpeg',
-    png: 'image/png',
-    svg: 'image/svg+xml',
-    js: 'application/javascript'
-};
-
-const dag = new Date();
-var names = [
-    {"name":"Glen", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
-    {"name":"Bo V", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
-    {"name":"Bo G", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
-    {"name":"Jens", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
-    {"name":"Henryk", "id":"6fd05639-3d88-4ca0-9491-832044d57b40"}, 
-    {"name":"Peter", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
-    {"name":"Stefan", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
-    {"name":"Torben", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
-//    {"name":"Heatmap", "id":"6e676887-2679-4285-950b-0a2139fdccae"},
-//    {"name":"", "id":"current_user"},
-
-];
-
 
 function renderCalendar(res, year){
     var str = e('init', '', 0, 0, 0, 0, 0, '', '', '', '', '');
@@ -247,7 +245,8 @@ function renderCalendar(res, year){
 //    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
     xpos += 100;
     names.forEach(element => {
-        str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', element.name, 'c', 'setUser(this)', '');
+        var star = (element.role !== "") ? " " + element.role : "";
+        str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', element.name + star, 'c', 'setUser(this)', '');
         xpos += 92;
     });
 
@@ -261,9 +260,10 @@ function renderCalendar(res, year){
     var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
 
     for (var m = 1; m < 13; m++) {
+        var mm = m;
         var hw = 60;
-        var xoff = 285 * ((m - 1) % 4);
-        var yoff = 40 + 270 * Math.floor((m - 1) / 4);
+        var xoff = 285 * ((mm - 1) % 4);
+        var yoff = 40 + 270 * Math.floor((mm - 1) / 4);
     
 // render month
         var id = 'timestamp-' + year + '-' + m + '-' + 0 + '-' + 0 + '-' + 0;
