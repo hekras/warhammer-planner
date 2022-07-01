@@ -86,6 +86,29 @@ function toggledayofweek(e) {
     ajaxtoggledays(count, ids);
 }
 
+function heatmap() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+//             document.getElementById("demo").innerHTML = this.responseText;
+
+            var db = JSON.parse(this.responseText);
+            var heat = ["", _redbg, _redbg, _redbg, _redbg, _bluebg, _bluebg, _greenbg, _greenbg, _greenbg];
+            alldays.forEach(id => {
+                var temperatur = 0;
+                db.forEach(user_record =>{
+                    temperatur = (user_record.ids.indexOf(id) >= 0) ? temperatur+1 : temperatur;
+                });
+                document.getElementById(id).style.background = heat[temperatur];
+            });
+
+        }
+    };
+ 
+    xhttp.open("POST", "/ajaxuser", true);
+    xhttp.send();
+}
+
 function setUser(element) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {

@@ -231,8 +231,8 @@ var names = [
     {"name":"Peter", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
     {"name":"Stefan", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
     {"name":"Torben", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
-    {"name":"Heatmap", "id":"6e676887-2679-4285-950b-0a2139fdccae"},
-    {"name":"", "id":"current_user"},
+//    {"name":"Heatmap", "id":"6e676887-2679-4285-950b-0a2139fdccae"},
+//    {"name":"", "id":"current_user"},
 
 ];
 
@@ -247,21 +247,20 @@ function renderCalendar(res, year){
 //    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
     xpos += 100;
     names.forEach(element => {
-        if (element.name != ""){
-            str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', element.name, 'c', 'setUser(this)', '');
-        }
-        else
-        {
-            str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', "none", 'c', '', '');
-        }
+        str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', element.name, 'c', 'setUser(this)', '');
         xpos += 92;
     });
 
-    for (var m = 1; m < 13; m++) {
+    str += e('bround', "heatmap", xpos, 5, 75, 32, 12, 0, '', "Heatmap", 'c', 'heatmap()', '');
+    xpos += 92;
 
-        var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-        var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
-    
+    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', "none", 'c', '', '');
+    xpos += 92;
+
+    var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+    var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
+
+    for (var m = 1; m < 13; m++) {
         var hw = 60;
         var xoff = 285 * ((m - 1) % 4);
         var yoff = 40 + 270 * Math.floor((m - 1) / 4);
@@ -372,8 +371,8 @@ app.post('/ajaxtoggledays', function(req, res){
             user_record.ids = user_record.ids.concat(update.ids);
         }
         res.send(db);
-        console.log(update);
-        console.log(user_record);
+//        console.log(update);
+//        console.log(user_record);
 //        console.log(update.ids);
 }
   //  console.log(JSON.stringify(db));
