@@ -21,7 +21,8 @@ var mime = {
 const dag = new Date();
 
 var names = [
-    {"name":"Glen", "role":"✵", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
+    {"name":"Organist", "role":"*", "id":"eff26981-f88b-4a6b-b2fb-caeadb6b2c4b"},
+    {"name":"Glen", "role":"", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
     {"name":"Bo V", "role":"", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
     {"name":"Bo G", "role":"", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
     {"name":"Jens", "role":"", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
@@ -32,14 +33,40 @@ var names = [
 ];
 
 var db=[];
+var valid_ids=[];
 var current_user = names[0];
+var db_filename = path.join(__dirname,"/databasen.json");
+var heatmap=[];
+
+function update_heat(){
+    db.forEach(user => {
+        if (user.role != ""){
+            valid_ids = [];
+            valid_ids = valid_ids.concat(user.ids);
+        }
+    });
+
+    heatmap=[];
+    valid_ids.forEach(id => {
+        var rec = {
+            "id": id,
+            "count": 0
+        };        
+        db.forEach(user => {
+            if ((user.role == "")&&(user.ids.indexOf(id) >=0)){
+                rec.count++;
+            }
+        });
+        heatmap.push(rec);
+    });
+    console.log(JSON.stringify(heatmap));
+}
 
 function init_db(){
-    var db_filename = path.join(__dirname,"/databasen.json");
-    console.log(db_filename);
     fs.readFile(db_filename, 'utf8', function (err, data) {
         if (!err){
             db = JSON.parse(data);
+            update_heat();
         }
         else{
             names.forEach(element => {
@@ -47,14 +74,22 @@ function init_db(){
                     db.push({
                         "user": element.name,
                         "userid": element.id,
+                        "role": element.role,
                         "ids":[]
                     });
                 }
             });
         }
     });
+}
 
-
+function write_db(){
+    fs.writeFile (db_filename, JSON.stringify(db), function(err) {
+        if (err){
+            console.log("db write didnt work!!");
+        }
+        console.log('complete');
+    });
 }
 
 function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, text, verticalallign, onclick, oninput)
@@ -102,6 +137,21 @@ function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, 
                 'height: ' + height + 'px; ' +
                 'font-size: ' + fontsize + 'px; ' +
                 'border: ' + borderthickness + 'px ' + borderstyle + ';">';
+            str_ab = '</div>';
+            break;
+        case 'heat':
+            str_aa = '<div style="' +
+                'box-sizing: border-box; ' +
+                'position: absolute; ' +
+                'overflow: hidden; ' +
+                'left: ' + x + 'px; ' +
+                'top: ' + y + 'px; ' +
+                'width: ' + width + 'px; ' +
+                'height: ' + height + 'px; ' +
+                'font-size: ' + fontsize + 'px; ' +
+                'border: ' + borderthickness + 'px ' + borderstyle + ';"' + 
+                'id="' + id + '" ' +
+                '>';
             str_ab = '</div>';
             break;
         case 'b':
@@ -176,6 +226,22 @@ function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, 
                 'onclick="' + onclick + '">';
             str_ab = '</div>';
             break;
+        case 'bday-hidden':
+            str_aa = '<div style="' +
+                'box-sizing: border-box; ' +
+                'color: lightgray; ' +
+                'border-radius: 2px;' +
+                'position: absolute; ' +
+                'overflow: hidden; ' +
+                'left: ' + x + 'px; ' +
+                'top: ' + y + 'px; ' +
+                'width: ' + width + 'px; ' +
+                'height: ' + height + 'px; ' +
+                'font-size: ' + fontsize + 'px; ' +
+                'border: ' + borderthickness + 'px ' + borderstyle + '; ' +
+                '">';
+            str_ab = '</div>';
+            break;
         case 'i':
         case 'input':
             str_aa = '<input type="text" id="' + id +
@@ -235,7 +301,7 @@ Date.prototype.getWeek = function() {
 }
 
 
-function renderCalendar(res, year){
+function renderCalendar(res, year, userid){
     var str = e('init', '', 0, 0, 0, 0, 0, '', '', '', '', '');
     var xpos = 2;
 //    str += e('bround', 'previous-year', xpos, 5, 32, 32, 29, 0, '', '&#10094;', 'c', 'setyear(' + (parseInt(year,10) - 1) + ')', '');
@@ -253,14 +319,37 @@ function renderCalendar(res, year){
     str += e('bround', "heatmap", xpos, 5, 75, 32, 12, 0, '', "Heatmap", 'c', 'heatmap()', '');
     xpos += 92;
 
-    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', "none", 'c', '', '');
+    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', userid, 'c', 'testopen()', '');
     xpos += 92;
 
     var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
     var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
 
-    for (var m = 1; m < 13; m++) {
-        var mm = m;
+    var user_record = null; 
+    db.forEach(e => {
+        if (e.userid === userid){
+            user_record = e;
+        }
+    });
+    var valid_months = [];
+    if (user_record.role != ""){
+        valid_months = [1,2,3,4,5,6,7,8,10,11,12];
+    }
+    else{
+        valid_ids.forEach(id => {
+            var m = parseInt(id.split('-')[2], 10);
+            if (valid_months.indexOf(m) === -1) {
+                valid_months.push(m);
+            }
+        });
+    }
+    valid_months.sort(function(a, b) {
+        return a - b;
+      });
+    console.log(JSON.stringify(valid_months));
+
+    var mm = 1;
+    valid_months.forEach(m => {
         var hw = 60;
         var xoff = 285 * ((mm - 1) % 4);
         var yoff = 40 + 270 * Math.floor((mm - 1) / 4);
@@ -295,8 +384,25 @@ function renderCalendar(res, year){
             }
             var id = 'timestamp-' + year + '-' + m + '-' + dd + '-' + weeknumber + '-' + sd;
             xpos = 2 + sd * 33;
-            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
-
+            if (user_record.role != ""){
+                str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
+                heatmap.forEach(rec => {
+                    if (rec.id == id){
+                        str += e('heat', id+'heat', xpos + xoff + 22, ypos + yoff + 20, 10, 10, 8, 1, '', rec.count, '', '', '');
+                    }
+                });
+            }
+            else if (valid_ids.indexOf(id) >= 0) {
+                str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
+                heatmap.forEach(rec => {
+                    if (rec.id == id){
+                        str += e('heat', id+'heat', xpos + xoff + 22, ypos + yoff + 20, 10, 10, 8, 1, '', rec.count, '', '', '');
+                    }
+                });
+            }
+            else{
+                str += e('bday-hidden', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid lightgray', dd, 'c', '', '');
+            }
             switch(sd){
                 case 7: // sunday
                     ypos += 33;
@@ -306,7 +412,8 @@ function renderCalendar(res, year){
                     break;
             }
         }
-    }    
+        mm++;
+    });
 
     str += e('end', '', 0, 0, 0, 0, 0, '', '', '', '', '');
     res.send(str);
@@ -314,18 +421,12 @@ function renderCalendar(res, year){
 
 init_db();
 
-app.get('/setyear', function (req, res) {
-    renderCalendar(res, req.query.year);
-});
-
-app.get('/wp', function (req, res) {
-    year = '2022';
-    renderCalendar(res, year);
-});
-
 app.get('/', function (req, res) {
     year = '2022';
-    renderCalendar(res, year);
+    var userid = (req.query.userid != null) ? req.query.userid : names[0].id;
+    console.log("userid:" + userid);
+
+    renderCalendar(res, year, userid);
 });
 
 app.get('*', function (req, res) {
@@ -346,15 +447,10 @@ app.get('*', function (req, res) {
     });
 });
 
-app.post('/ajaxuser', function(req, res){
-    res.send(db);
-});
-
 app.post('/ajaxtoggledays', function(req, res){
     var update = req.body;
-//    console.log(update.ids);
-
-    var user_record = null; 
+    var user_record = null;
+    
     db.forEach(e => {
         if (e.userid === update.userid){
             user_record = e;
@@ -370,12 +466,16 @@ app.post('/ajaxtoggledays', function(req, res){
         else{
             user_record.ids = user_record.ids.concat(update.ids);
         }
-        res.send(db);
-//        console.log(update);
-//        console.log(user_record);
-//        console.log(update.ids);
-}
-  //  console.log(JSON.stringify(db));
+        update_heat();
+
+        var map = {
+            "ids": user_record.ids,
+            "heatmap": heatmap
+        };
+
+        res.send(map);
+        write_db();
+    }
 });
 
 app.listen(PORT, function () {

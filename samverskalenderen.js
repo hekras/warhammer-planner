@@ -29,6 +29,29 @@ function initdays() {
             }
         });
     }
+
+    var current_user_id = document.getElementById("current_user").innerText;
+    document.getElementById(current_user_id).style.background = _greenbg;
+
+    var update = {
+        "userid": current_user_id,
+        "command": _greenbg,
+        "ids": []
+    };
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var map = JSON.parse(this.responseText);
+            alldays.forEach(id => {
+                document.getElementById(id).style.background = (map.ids.indexOf(id)===-1) ? '': _greenbg;
+            });
+        }
+    };
+    
+    xhttp.open("POST", "/ajaxtoggledays", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send(JSON.stringify(update));
 }
 
 function toggleday(e) {
@@ -86,113 +109,38 @@ function toggledayofweek(e) {
     ajaxtoggledays(count, ids);
 }
 
-function heatmap() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-//             document.getElementById("demo").innerHTML = this.responseText;
-
-            var db = JSON.parse(this.responseText);
-            var heat = ["", _redbg, _redbg, _redbg, _redbg, _bluebg, _bluebg, _greenbg, _greenbg, _greenbg];
-            alldays.forEach(id => {
-                var temperatur = 0;
-                db.forEach(user_record =>{
-                    temperatur = (user_record.ids.indexOf(id) >= 0) ? temperatur+1 : temperatur;
-                });
-                document.getElementById(id).style.background = heat[temperatur];
-            });
-
-        }
-    };
- 
-    xhttp.open("POST", "/ajaxuser", true);
-    xhttp.send();
-}
-
 function setUser(element) {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-//             document.getElementById("demo").innerHTML = this.responseText;
-
-            var oldel = document.getElementById(document.getElementById("current_user").innerText);
-            if (oldel != null){
-                oldel.style.background = "";
-            }
-            document.getElementById("current_user").innerText = element.id;
-            document.getElementById(element.id).style.background = _greenbg;
-
-            var db = JSON.parse(this.responseText);
-
-            var user_record = null; 
-            db.forEach(e => {
-                if (e.userid === element.id){
-                    user_record = e;
-                }
-            });
-
-            if (user_record != null){
-                alldays.forEach(id => {
-                    document.getElementById(id).style.background = (user_record.ids.indexOf(id)===-1) ? '': _greenbg;
-                });
-//                console.log( '=======================' );
-//                console.log( JSON.stringify(user_record) );
-            }
-        }
-    };
- 
-    xhttp.open("POST", "/ajaxuser", true);
-    //xhttp.setRequestHeader("Content-Type", "application/json");
-    xhttp.send();
+    document.getElementById("current_user").innerText = element.id;
+    window.open("/?userid="+element.id, '_self');
 }
 
 function ajaxtoggledays(count, ids) {
     var current_user_id = document.getElementById("current_user").innerText;
-    if (current_user_id != "none"){
-//        console.log("count="+count);
         var bg = (count > 0) ? '' : _graybg;
-
-        /*
-        ids.forEach(element => {
-            document.getElementById(element).style.background = bg;
-        });
-*/
-
         var update = {
             "userid": current_user_id,
             "command": bg,
             "ids": ids
         };
 
-//        console.log(JSON.stringify(update));
-
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-    //             document.getElementById("demo").innerHTML = this.responseText;
-                var db = JSON.parse(this.responseText);
-
-                var user_record = null; 
-                db.forEach(e => {
-                    if (e.userid === current_user_id){
-                        user_record = e;
-                    }
-                });
-
-                if (user_record != null){
-                    alldays.forEach(id => {
-                        document.getElementById(id).style.background = (user_record.ids.indexOf(id)===-1) ? '': _greenbg;
+                var map = JSON.parse(this.responseText);
+                alldays.forEach(id => {
+                    document.getElementById(id).style.background = (map.ids.indexOf(id)===-1) ? '': _greenbg;
+                    map.heatmap.forEach(e => {
+                        if ((e.id == id)&&(document.getElementById(id+'heat') != null)){
+                            document.getElementById(id+'heat').innerText = e.count;
+                        }
                     });
-  //                  console.log( '=======================' );
-  //                  console.log( JSON.stringify(user_record) );
-                }
+                });
             }
         };
      
         xhttp.open("POST", "/ajaxtoggledays", true);
         xhttp.setRequestHeader("Content-Type", "application/json");
         xhttp.send(JSON.stringify(update));
-    }
 
 }
 
