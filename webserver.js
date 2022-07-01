@@ -314,9 +314,6 @@ function renderCalendar(res, year, userid){
         xpos += 92;
     });
 
-    str += e('bround', "heatmap", xpos, 5, 75, 32, 12, 0, '', "Heatmap", 'c', 'heatmap()', '');
-    xpos += 92;
-
     str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', userid, 'c', 'testopen()', '');
     xpos += 92;
 
