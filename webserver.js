@@ -21,15 +21,15 @@ var mime = {
 const dag = new Date();
 
 var names = [
-    {"name":"Organist", "role":"*", "id":"eff26981-f88b-4a6b-b2fb-caeadb6b2c4b"},
-    {"name":"Glen", "role":"", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
-    {"name":"Bo V", "role":"", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
-    {"name":"Bo G", "role":"", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
-    {"name":"Jens", "role":"", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
-    {"name":"Henryk", "role":"", "id":"6fd05639-3d88-4ca0-9491-832044d57b40"}, 
-    {"name":"Peter", "role":"", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
-    {"name":"Stefan", "role":"", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
-    {"name":"Torben", "role":"", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
+    {"name":"Org", "role":"*", "id":"eff26981-f88b-4a6b-b2fb-caeadb6b2c4b"},
+    {"name":"GM", "role":"", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
+    {"name":"Finn", "role":"", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
+    {"name":"Undick", "role":"", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
+    {"name":"Ursula", "role":"", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
+    {"name":"Marath", "role":"", "id":"6fd05639-3d88-4ca0-9491-832044d57b40"}, 
+    {"name":"Halfdan", "role":"", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
+    {"name":"Adric", "role":"", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
+    {"name":"Odrick", "role":"", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
 ];
 
 var db=[];
@@ -146,8 +146,7 @@ function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, 
                 'top: ' + y + 'px; ' +
                 'width: ' + width + 'px; ' +
                 'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: ' + borderthickness + 'px ' + borderstyle + ';"' + 
+                'font-size: ' + fontsize + 'px;"' + 
                 'id="' + id + '" ' +
                 '>';
             str_ab = '</div>';
@@ -314,7 +313,8 @@ function renderCalendar(res, year, userid){
         xpos += 92;
     });
 
-    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', userid, 'c', 'testopen()', '');
+//    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', userid, 'c', 'testopen()', '');
+    str += '<div id="current_user" style="display: none;">' + userid + '</div>';
     xpos += 92;
 
     var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
@@ -328,7 +328,7 @@ function renderCalendar(res, year, userid){
     });
     var valid_months = [];
     if (user_record.role != ""){
-        valid_months = [1,2,3,4,5,6,7,8,10,11,12];
+        valid_months = [1,2,3,4,5,6,7,8,9,10,11,12];
     }
     else{
         valid_ids.forEach(id => {
