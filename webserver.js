@@ -1,8 +1,17 @@
 var path = require('path');
+const {Pool} = require('pg');
 const express = require('express');
 var fs = require('fs');
 
-const PORT = process.env.PORT || 8000
+const pool = new Pool({
+    user: 'sqlmaster',
+    host: 'localhost',
+    database: 'warhammer_planner',
+    password: '-Zx12131415',
+    port: 5432,
+});
+  
+const PORT = process.env.PORT || 8080
 var app = express();
 app.use(express.json());
 
@@ -19,6 +28,17 @@ var mime = {
 };
 
 const dag = new Date();
+const km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+const kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
+
+var eventliste = [
+    {name:"Warhammer, august", type:"event-planner", uuid:"1", valid_dates:[], final_date:"n/a"},
+    {name:"Warhammer, september", type:"", uuid:"2", valid_dates:[], final_date:"n/a"},
+    {name:"Warhammer, oktober", type:"", uuid:"3", valid_dates:[], final_date:"n/a"},
+    {name:"Warhammer, november", type:"", uuid:"4", valid_dates:[], final_date:"n/a"}
+];
+
+/** ADD names to DB 
 
 var names = [
     {"name":"Org", "role":"*", "id":"eff26981-f88b-4a6b-b2fb-caeadb6b2c4b"},
@@ -32,12 +52,32 @@ var names = [
     {"name":"Odrick", "role":"", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
 ];
 
+names.forEach(e =>{
+    pool.query("INSERT INTO brugere (name, calendar) VALUES ('" + e.name + "', '{}')", (err, res) => {
+        console.log(err, res)
+      })
+})
+/**/
+
 var db=[];
 var valid_ids=[];
-var current_user = names[0];
+//var current_user = names[0];
 var db_filename = path.join(__dirname,"/databasen.json");
 var heatmap=[];
 
+// Returns the ISO week of the date.
+Date.prototype.getWeek = function() {
+    var date = new Date(this.getTime());
+    date.setHours(0, 0, 0, 0);
+    // Thursday in current week decides the year.
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    // January 4 is always in week 1.
+    var week1 = new Date(date.getFullYear(), 0, 4);
+    // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
+                          - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+  
 function update_heat(){
     db.forEach(user => {
         if (user.role != ""){
@@ -90,38 +130,57 @@ function write_db(){
     });
 }
 
+function renderBegin(){
+    return '<!DOCTYPE html>' +
+    '<html>' +
+        '<title>Warhammer planneren</title>' +
+        '<head>' +
+        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">' +
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">' +
+        '<link rel="stylesheet" href="./w3.css">' +
+    '<style>' +
+        '.center {' +
+            'margin: 0;' +
+            'position: absolute;' +
+            'top: 50%;' +
+            'left: 50%;' +
+            '-ms-transform: translate(-50%, -50%);' +
+            'transform: translate(-50%, -50%);' +
+        '}' +
+    '</style>' +
+    '</head>' +
+    '<body>';
+}
+
+function renderEnd(){
+    return '<script src="/samverskalenderen.js"></script>' +
+    '</body></html>';
+}
+
+function renderMainMenu(){
+    var xpos = 2;
+    var str = e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-plus-o"></i>', 'c', 'setGUI(0)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-check-o"></i>', 'c', 'setGUI(1)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-pencil"></i>', 'c', 'setGUI(2)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-users"></i>', 'c', 'setGUI(3)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-list"></i>', 'c', 'setGUI(4)', '');
+    return str;
+}
+
 function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, text, verticalallign, onclick, oninput)
 {
     var str_aa = '';
     var str_ab = '';
     switch (el) {
         case 'init':
-            str_aa = 
-            '<!DOCTYPE html>' +
-            '<html>' +
-                '<title>Warhammer planneren</title>' +
-                '<head>' +
-                '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">' +
-                '<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">' +
-                '<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">' +
-//                '<link rel="stylesheet" href="/css/w3css/w3.css">' +
-            '<style>' +
-                '.center {' +
-                    'margin: 0;' +
-                    'position: absolute;' +
-                    'top: 50%;' +
-                    'left: 50%;' +
-                    '-ms-transform: translate(-50%, -50%);' +
-                    'transform: translate(-50%, -50%);' +
-                '}' +
-            '</style>' +
-                '</head>' +
-                '<body><html>';
+            str_aa = renderBegin();
             break;
         case 'end':
-            str_aa = 
-            '<script src="/samverskalenderen.js"></script>' +
-            '</body>';
+            str_aa = renderEnd();
             break;
         case 'l':
         case 'label':
@@ -284,25 +343,84 @@ function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, 
     return ret;
 }
 
-// Returns the ISO week of the date.
-Date.prototype.getWeek = function() {
-  var date = new Date(this.getTime());
-  date.setHours(0, 0, 0, 0);
-  // Thursday in current week decides the year.
-  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-  // January 4 is always in week 1.
-  var week1 = new Date(date.getFullYear(), 0, 4);
-  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
-  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
-                        - 3 + (week1.getDay() + 6) % 7) / 7);
+function renderEventList(){
+    var str = '<table class="w3-table-all">' +
+    '<tr class="w3-light-green">' +
+    '<th>Action</th>' +
+    '<th>Name</th>' +
+    '<th>Type</th>' +
+    '<th>Event Date</th>' +
+    '</tr>';
+    eventliste.forEach(e => {
+        str += '<tr>'
+        str += '<td><a class="w3-button" href="/select-valid-dates/' + e.uuid + '">Valid dates</a><a class="w3-button"><i class="fa fa-pencil"></i></a></td>';
+        str += '<td>' + e.name + '</td>';
+        str += '<td>' + e.type + '</td>';
+        str += '<td>' + e.final_date + '</td>';
+        str += '</tr>'
+    });
+    str += '</table>';
+    return str;
 }
 
+function renderUsers(){
+    var str = '<table class="w3-table-all">' +
+    '<tr class="w3-light-green">' +
+    '<th>Action</th>' +
+    '<th>Name</th>' +
+    '</tr>';
+    pool.query("SELECT name FROM brugere ORDER BY name", (err, res) => {
+        if (!err){
+            console.log(res)
+                    res.rows.forEach(e => {
+                str += '<tr>';
+                str += '<td><a class="w3-button"><i class="fa fa-user-times"></i></a></td>';
+                str += '<td>' + e.name + '</td>';
+                str += '</tr>';
+            });
+            str += '<tr>'
+            str += '<td><a class="w3-button"><i class="fa fa-user-plus"></i></a></td>';
+            str += '<td></td>';
+            str += '</tr>'
+            str += '</table>';
+            }
+      });
+    return str;
+}
+
+function renderGUI(res, year, userid){
+    var str = renderBegin();
+    str += renderMainMenu();
+    str += '<div style="top: 50px; position: relative;">';
+    str += '<div id="2f7749a6-d82e-45db-9648-018b2aa7fe4d" style="display:none;">';
+    str += '<H1>New Calendar, Valid Dates</H1>';
+    str += '</div>'
+    str += '<div id="6c7387f9-ca23-43b0-963c-1ddcafae5a0e" style="display:none;">';
+    str += '<H1>Calendar check</H1>';
+    str += '</div>'
+    str += '<div id="143821e5-8801-4898-b697-82956280eb95" style="display:none;">';
+    str += '<H1>Settings</H1>';
+    str += '</div>'
+    str += '<div id="327d03d9-5152-4a39-944a-07cd4f404641" style="display:block;">';
+    str += '<H1>Users</H1>'; 
+    str += renderUsers();
+    str += '</div>'
+    str += '<div id="61e19db2-07ec-41b0-8831-0411f6b0b69d" style="display:block;">';
+    str += '<H1>Event List</H1>';
+    str += renderEventList();
+    str += '</div>'
+    str += '</div>'
+    str += renderEnd();
+    res.send(str);
+
+}
 
 function renderCalendar(res, year, userid){
-    var str = e('init', '', 0, 0, 0, 0, 0, '', '', '', '', '');
-    var xpos = 2;
+    var str = renderBegin();
+    str += renderMainMenu()
+    var xpos = 2 + 35*5;
 //    str += e('bround', 'previous-year', xpos, 5, 32, 32, 29, 0, '', '&#10094;', 'c', 'setyear(' + (parseInt(year,10) - 1) + ')', '');
-    xpos += 35;
+//    xpos += 35;
     str += e('l', '', xpos, 5, 90, 32, 29, 0, '', year, 'c', '', '');
     xpos += 92;
 //    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
@@ -317,9 +435,7 @@ function renderCalendar(res, year, userid){
     str += '<div id="current_user" style="display: none;">' + userid + '</div>';
     xpos += 92;
 
-    var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-    var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
-
+    str += '<div style="top: 50px; height: 200px; position: relative;">';
     var user_record = null; 
     db.forEach(e => {
         if (e.userid === userid){
@@ -340,7 +456,7 @@ function renderCalendar(res, year, userid){
     }
     valid_months.sort(function(a, b) {
         return a - b;
-      });
+    });
 
     var mm = 1;
     valid_months.forEach(m => {
@@ -409,6 +525,135 @@ function renderCalendar(res, year, userid){
         mm++;
     });
 
+    str += '</div>'
+    str += e('end', '', 0, 0, 0, 0, 0, '', '', '', '', '');
+    res.send(str);
+}
+
+// valid date
+// id=timestamp-year-month-0-0-0                  : month header
+// id=timestamp-year-month-0-0-dd                 : week day header
+// id=timestamp-year-month-0-weeknumber-0         : weeknumber
+// id=timestamp-year-month-weekday-weeknumber-day : day
+
+function genId(year,month,weekday,weeknumber,day,event_index){
+    return 'timestamp-' + year + '-' + month + '-' + weekday + '-' + weeknumber + '-' + day + '-' + event_index;
+}
+
+function insertKalenderRecord(recordType, year, month, day, weeknumber, weekday, text){
+    var str = "INSERT INTO kalender (html_id, record_type, year, month, day, weeknumber, weekday, str) VALUES (" +
+              "'" + recordType + "-" + year + "-" + month + "-" + day + "-" + weeknumber + "-" + weekday + "', " +
+              "'" + recordType + "', " +
+              year + ", " + month + ", " + day + ", " + weeknumber + ", " + weekday + ", '" + text + "');";
+    pool.query(str, (err, res) => {
+    console.log(err, res)
+    });
+        
+    return str + "<br>";
+}
+
+function createKalenderTable(res, year, event_index){
+    var str = "";
+    valid_months = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+    valid_months.forEach(m => {
+// render month
+        str += insertKalenderRecord('month', 2022, m, 0, 0, 0, km[m - 1]);
+// rendering daynames
+        for (var dd = 1; dd < 8; dd++) {
+            str += insertKalenderRecord('weekday', 2022, m, 0, 0, dd, kd[dd - 1]);
+        }
+// rendering small calendar
+        var weekchange = true;
+        dag.setFullYear(year,m,0);
+        var num_days = dag.getDate();
+        for (var dd = 1; dd < num_days+1; dd++) {
+            dag.setFullYear(year,m-1,dd);
+            sd = dag.getDay();
+            sd = (sd === 0) ? 7 : sd;
+            if (weekchange) {
+                weeknumber = dag.getWeek();
+                str += insertKalenderRecord('weeknumber', 2022, 0, 0, weeknumber, 0, weeknumber);
+                weekchange = false;
+            }
+            str += insertKalenderRecord('day', 2022, m, dd, weeknumber, sd, dd);
+            switch(sd){
+                case 7: // sunday
+                    weekchange = true;
+                    weeknumber++;
+                    break;
+            }
+        }
+    });
+
+    return str;
+}
+
+function renderValidDateSelector(res, year, event_index){
+    var str = renderBegin();
+    str += renderMainMenu()
+    var xpos = 2 + 35*5;
+//    str += e('bround', 'previous-year', xpos, 5, 32, 32, 29, 0, '', '&#10094;', 'c', 'setyear(' + (parseInt(year,10) - 1) + ')', '');
+//    xpos += 35;
+    str += e('l', '', xpos, 5, 90, 32, 29, 0, '', year, 'c', '', '');
+    xpos += 92;
+//    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
+    xpos += 100;
+
+//    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', userid, 'c', 'testopen()', '');
+
+    valid_months = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+    var mm = 1;
+    valid_months.forEach(m => {
+        var hw = 60;
+        var xoff = 285 * ((mm - 1) % 4);
+        var yoff = 40 + 270 * Math.floor((mm - 1) / 4);
+    
+// render month
+        var id = genId(year, m, 0 ,0 ,0 , event_index);
+        str += e('bday', id, xoff, 20 + yoff, 300, 32, 20, 1, '', km[m - 1], 'c', 'togglemonth(this)', '');
+
+// rendering daynames
+        for (var dd = 1; dd < 8; dd++) {
+            var ypos = 50;
+            var xpos = 2 + dd * 33;
+            var id = genId(year, m, 0 ,0 ,dd , event_index);
+            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 32, 12, 1, 'solid black', kd[dd - 1], 'c', 'toggledayofweek(this)', '');
+        }
+
+// rendering small calendar
+        var ypos = 85;
+        var ypos2 = 50;
+        var weekchange = true;
+        dag.setFullYear(year,m,0);
+        var num_days = dag.getDate();
+        for (var dd = 1; dd < num_days+1; dd++) {
+            dag.setFullYear(year,m-1,dd);
+            sd = dag.getDay();
+            sd = (sd === 0) ? 7 : sd;
+            if (weekchange) {
+                weeknumber = dag.getWeek();
+                var id = genId(year, 0 ,0 ,weeknumber, 0 , event_index);
+                str += e('bday', id, 2 + xoff, ypos + yoff, 32, 31, 12, 1, 'solid black', weeknumber, 'c', 'toggleweek(this)', '');
+                weekchange = false;
+            }
+            var id = genId(year, m, dd, weeknumber, sd, event_index);
+            xpos = 2 + sd * 33;
+            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
+            switch(sd){
+                case 7: // sunday
+                    ypos += 33;
+                    ypos2 += (hw + 1) * 3;
+                    weekchange = true;
+                    weeknumber++;
+                    break;
+            }
+        }
+        mm++;
+    });
+
+    str += '</div>'
     str += e('end', '', 0, 0, 0, 0, 0, '', '', '', '', '');
     res.send(str);
 }
@@ -416,10 +661,34 @@ function renderCalendar(res, year, userid){
 init_db();
 
 app.get('/', function (req, res) {
-    year = '2022';
-    var userid = (req.query.userid != null) ? req.query.userid : names[0].id;
+//    year = '2022';
+//    renderGUI(res, year, 0);
+    var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
+    if (file.indexOf(dir + path.sep) !== 0) {
+        return res.status(403).end('Forbidden');
+    }
+    var type = mime[path.extname(file).slice(1)] || 'text/plain';
+    var s = fs.createReadStream(file);
+    s.on('open', function () {
+        res.set('Content-Type', type);
+        s.pipe(res);
+    });
+    s.on('error', function () {
+        res.set('Content-Type', 'text/plain');
+        res.status(404).end('Not found');
+    });
+});
 
-    renderCalendar(res, year, userid);
+/** create records in kalender table */
+app.get('/qw', function (req, res) {
+    var str = renderBegin();
+    str += createKalenderTable(res, 2022, 0);
+    str += renderEnd();
+    res.send(str);
+});
+
+app.get('/select-valid-dates/*', function (req, res) {
+    renderValidDateSelector(res, '2022', 0);
 });
 
 app.get('*', function (req, res) {
@@ -468,6 +737,25 @@ app.post('/ajaxtoggledays', function(req, res){
         res.send(map);
         write_db();
     }
+});
+
+app.post('/ajaxquerybrugere', function(req, res){
+    pool.query("SELECT name FROM brugere ORDER BY name", (err, result) => {
+        if (!err){
+            res.send(result.rows);
+        }
+      });
+});
+
+app.post('/ajaxquerykalender', function(req, res){
+    pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day", (err, result) => {
+        if (!err){
+            res.send(result.rows);
+        }
+        else{
+            res.send("Error");
+        }
+      });
 });
 
 app.listen(PORT, function () {

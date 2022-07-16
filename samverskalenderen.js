@@ -17,6 +17,22 @@ function setyear(y) {
     window.open("/setyear?year=" + y, '_self');
 }
 
+function setGUI(n){
+    var ids = [
+        "2f7749a6-d82e-45db-9648-018b2aa7fe4d",
+        "6c7387f9-ca23-43b0-963c-1ddcafae5a0e",
+        "143821e5-8801-4898-b697-82956280eb95",
+        "327d03d9-5152-4a39-944a-07cd4f404641",
+        "61e19db2-07ec-41b0-8831-0411f6b0b69d"
+    ];
+
+    var id = ids[n];
+
+    ids.forEach( i=>{
+        document.getElementById(i).style.display = (i != id) ? "none" : "block";
+    });
+}
+
 function initdays() {
     alldays = [];
 
@@ -116,32 +132,31 @@ function setUser(element) {
 
 function ajaxtoggledays(count, ids) {
     var current_user_id = document.getElementById("current_user").innerText;
-        var bg = (count > 0) ? '' : _graybg;
-        var update = {
-            "userid": current_user_id,
-            "command": bg,
-            "ids": ids
-        };
+    var bg = (count > 0) ? '' : _graybg;
+    var update = {
+        "userid": current_user_id,
+        "command": bg,
+        "ids": ids
+    };
 
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                var map = JSON.parse(this.responseText);
-                alldays.forEach(id => {
-                    document.getElementById(id).style.background = (map.ids.indexOf(id)===-1) ? '': _greenbg;
-                    map.heatmap.forEach(e => {
-                        if ((e.id == id)&&(document.getElementById(id+'heat') != null)){
-                            document.getElementById(id+'heat').innerText = e.count;
-                        }
-                    });
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var map = JSON.parse(this.responseText);
+            alldays.forEach(id => {
+                document.getElementById(id).style.background = (map.ids.indexOf(id)===-1) ? '': _greenbg;
+                map.heatmap.forEach(e => {
+                    if ((e.id == id)&&(document.getElementById(id+'heat') != null)){
+                        document.getElementById(id+'heat').innerText = e.count;
+                    }
                 });
-            }
-        };
-     
-        xhttp.open("POST", "/ajaxtoggledays", true);
-        xhttp.setRequestHeader("Content-Type", "application/json");
-        xhttp.send(JSON.stringify(update));
-
+            });
+        }
+    };
+    
+    xhttp.open("POST", "/ajaxtoggledays", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send(JSON.stringify(update));
 }
 
 /***********************************
