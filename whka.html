@@ -22,6 +22,7 @@
     position: absolute;
     overflow: hidden;
     font-size: 20px;
+    font-weight: bold;
     cursor: pointer;
     width: 300px;
     height: 32px;
@@ -31,6 +32,7 @@
     position: absolute;
     overflow: hidden;
     font-size: 12px;
+    font-weight: bold;
     border: 1px solid black;
     border-radius: 2px;
     cursor: pointer;
@@ -53,6 +55,7 @@
     position: absolute;
     overflow: hidden;
     font-size: 12px;
+    font-weight: bold;
     border: 1px solid black;
     border-radius: 2px;
     cursor: pointer;
@@ -63,7 +66,15 @@
 </head>
 <body>
   <div class="w3-bar w3-black">
-      <a href="#" class="w3-bar-item w3-button"><i class="fa fa-plus-circle"></i></a>
+    <a href="#" class="w3-bar-item w3-button"><i class="fa fa-plus-circle"></i></a>
+    <div class="w3-bar-item w3-button" onclick="displayUserSelector()">Bruger: <span id="selected-user">N/A</span><span id="selected-user-id" style="display: none;">-1</span></div>
+    <div class="w3-bar-item w3-button" onclick="document.getElementById('planer').style.display='block'">Plan: <span id="selected-plan">N/A</span><span id="selected-plan-id" style="display: none;">-1</span></div>
+    <div class="w3-bar-item">Mode: <span id="selected-mode">---</span> (<span id="selected-mode-id">0</span>)</div>
+  </div>
+  <div id="planer" style="display: none;">
+    <h3>Planer</h3>
+    <div id="planer-listen">
+    </div>
   </div>
   <div id="brugere" style="display: none;">
     <h3>Brugere</h3>
@@ -71,7 +82,6 @@
     </div>
   </div>
   <div id="valid-kalender" style="display: block;">
-    <h3>Valide datoer</h3>
     <div id="valid-kalender-selector" style="position: relative;">
     </div>
   </div>
