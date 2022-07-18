@@ -265,6 +265,21 @@ app.post('/ajaxqueryplankalender', function(req, res){
     });
 });
 
+app.post('/ajaxquerybrugerkalender', function(req, res){
+    var sql= "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    console.log(sql);
+    pool.query(sql, (err, result) => {
+        if (!err){
+            console.log(result);
+            res.send(result.rows[0].calendar);
+        }
+        else{
+            console.log(err);
+            res.send("Error");
+        }
+    });
+});
+
 function updatePlanCalender(planid, map){
     var str = "ARRAY[ ";
     map.forEach(e=>{
@@ -286,16 +301,16 @@ app.post('/ajaxtoggleplandays', function(req, res){
     pool.query(sql, (err, result) => {
         if (!err){
             if (result.rowCount == 1){
-                console.log("-----------------------");
+               /*  console.log("-----------------------");
                 console.log(result.rows[0].calendar);
-                console.log(req.body.command);
+                console.log(req.body.command); */
                 var map = req.body.ids;
-                console.log(map);
+                /* console.log(map); */
                 if (req.body.command === 'set'){
                     map.forEach(e=>{
                         if (result.rows[0].calendar.indexOf(e) < 0){
                             result.rows[0].calendar.push(e);
-                            console.log("pushing:" + e);
+                            /* console.log("pushing:" + e); */
                         }
                     });
                 }
@@ -303,7 +318,7 @@ app.post('/ajaxtoggleplandays', function(req, res){
                     map.forEach(e=>{
                         if (result.rows[0].calendar.indexOf(e) >= 0){
                             result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e),1);
-                            console.log("Slicing:" + e);
+                            /* console.log("Slicing:" + e); */
                         }
                     });
                 }
@@ -318,18 +333,51 @@ app.post('/ajaxtoggleplandays', function(req, res){
     });
 });
 
-app.post('/oldajaxtoggleplandays', function(req, res){
-    var str = "ARRAY[";
-    req.body.ids.forEach(e=>{
+function updateBrugerCalender(userid, map){
+    var str = "ARRAY[ ";
+    map.forEach(e=>{
         str += "'" + e + "',";
     })
-    str = str.substring(0, str.length-1) + "]";
-    var sql= "UPDATE planer SET calendar=" + str +" WHERE id=" + req.body.planid +";"
+    str = str.substring(0, str.length-1) + "]::text[]";
+    var sql= "UPDATE brugere SET calendar=" + str + " WHERE id=" + userid +";"
+    pool.query(sql, (err, result) => {
+        if (err){
+            console.log("FAIL - updateBrugerCalender");
+            console.log(sql);
+        }
+    });
+}
+
+app.post('/ajaxtogglebrugerdays', function(req, res){
+    var sql= "SELECT calendar FROM brugere WHERE id=" + req.body.userid +";"
     console.log(sql);
     pool.query(sql, (err, result) => {
         if (!err){
-            console.log(result.rows);
-            res.send(result.rows);
+            if (result.rowCount == 1){
+               /*  console.log("-----------------------");
+                console.log(result.rows[0].calendar);
+                console.log(req.body.command); */
+                var map = req.body.ids;
+                /* console.log(map); */
+                if (req.body.command === 'set'){
+                    map.forEach(e=>{
+                        if (result.rows[0].calendar.indexOf(e) < 0){
+                            result.rows[0].calendar.push(e);
+                            /* console.log("pushing:" + e); */
+                        }
+                    });
+                }
+                else if (req.body.command === 'clear'){
+                    map.forEach(e=>{
+                        if (result.rows[0].calendar.indexOf(e) >= 0){
+                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e),1);
+                            /* console.log("Slicing:" + e); */
+                        }
+                    });
+                }
+                updateBrugerCalender(req.body.userid, result.rows[0].calendar);
+                res.send(result.rows[0].calendar);
+            }
         }
         else{
             console.log(err);
@@ -355,6 +403,41 @@ app.post('/ajaxqueryplaner', function(req, res){
 });
 
 app.post('/ajaxquerykalender', function(req, res){
+    pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
+        if (!err){
+            res.send(result.rows);
+        }
+        else{
+            res.send("Error");
+        }
+      });
+});
+
+app.post('/ajaxquerymode3kalender', function(req, res){
+    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
+    pool.query(sql, (err, result) => {
+        if (!err){
+            if (result.rowCount === 1){
+                var datemap = [];
+                result.rows[0].calendar.forEach(r=>{
+                    var split = r.split('-');
+                    var key = split[1] + '-' + split[2];
+                    var ix = datemap.findIndex(e=> e.key === key);
+                    if (ix === -1){
+                        datemap.push({"key":key, "year":split[1], "month":split[2]});
+                    }
+                });
+                datemap.sort((x,y) => x.key.localeCompare(y.key));
+                console.log("datemap...");
+                console.log(datemap);
+        }
+//            res.send(result.rows);
+        }
+        else{
+            res.send("Error");
+        }
+      });
+
     pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
         if (!err){
             res.send(result.rows);

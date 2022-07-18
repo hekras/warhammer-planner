@@ -67,8 +67,8 @@
 <body>
   <div class="w3-bar w3-black">
     <a href="#" class="w3-bar-item w3-button"><i class="fa fa-plus-circle"></i></a>
-    <div class="w3-bar-item w3-button" onclick="displayUserSelector()">Bruger: <span id="selected-user">N/A</span><span id="selected-user-id" style="display: none;">-1</span></div>
-    <div class="w3-bar-item w3-button" onclick="document.getElementById('planer').style.display='block'">Plan: <span id="selected-plan">N/A</span><span id="selected-plan-id" style="display: none;">-1</span></div>
+    <div class="w3-bar-item w3-button" onclick="displayUserSelector()">Bruger: <span id="selected-user">---</span> (<span id="selected-user-id" style="display: inline;">-1</span>)</div>
+    <div class="w3-bar-item w3-button" onclick="displayPlanSelector()">Plan: <span id="selected-plan">---</span> (<span id="selected-plan-id" style="display: inline;">-1</span>)</div>
     <div class="w3-bar-item">Mode: <span id="selected-mode">---</span> (<span id="selected-mode-id">0</span>)</div>
   </div>
   <div id="planer" style="display: none;">

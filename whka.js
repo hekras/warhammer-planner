@@ -60,9 +60,9 @@ function ajaxquerybrugere() {
             '</tr>';
             var rows = JSON.parse(this.responseText);
             rows.forEach(e => {
-                str += '<tr>';
+                str += '<tr style="cursor: pointer;" onclick="selectUser(' + e.id + ', ' + "'" + e.name + "'" + ')">';
                 str += '<td><a class="w3-button"><i class="fa fa-user-times"></i></a></td>';
-                str += '<td><div class="w3-button" onclick="selectUser(' + e.id + ', ' + "'" + e.name + "'" + ')">' + e.name + '</div></td>';
+                str += '<td>' + e.name + '</td>';
                 str += '</tr>';
             });
             str += '<tr>'
@@ -92,11 +92,11 @@ function ajaxqueryplaner() {
             '</tr>';
             var rows = JSON.parse(this.responseText);
             rows.forEach(e => {
-                str += '<tr>';
+                str += '<tr style="cursor: pointer;" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">';
                 str += '<td><a class="w3-button"><i class="fa fa-user-times"></i></a></td>';
-                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "'" + ')">' + e.name + '</div></td>';
-                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "'" + ')">' + e.type + '</div></td>';
-                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "'" + ')">' + e.final_date + '</div></td>';
+                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">' + e.name + '</div></td>';
+                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">' + e.type + '</div></td>';
+                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">' + e.final_date + '</div></td>';
                 str += '</tr>';
             });
             str += '</table>';
@@ -112,13 +112,26 @@ function ajaxqueryplaner() {
 function displayUserSelector(){
     
     if (document.getElementById('brugere').style.display !=='none'){
-        document.getElementById('selected-user').innerText = 'N/A';
+        document.getElementById('selected-user').innerText = '---';
         document.getElementById('selected-user-id').innerText = '-1';
-        selectPlan(document.getElementById('selected-plan-id').innerText, document.getElementById('selected-plan').innerText );
         document.getElementById('brugere').style.display = 'none';
+        updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
     }
     else{
         document.getElementById('brugere').style.display='block';
+    }
+}
+
+function displayPlanSelector(){
+    
+    if (document.getElementById('planer').style.display !=='none'){
+        document.getElementById('selected-plan').innerText = '---';
+        document.getElementById('selected-plan-id').innerText = '-1';
+        document.getElementById('planer').style.display = 'none';
+        updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
+    }
+    else{
+        document.getElementById('planer').style.display='block';
     }
 }
 
@@ -126,26 +139,63 @@ function selectUser(id, name){
     document.getElementById('selected-user').innerText = name;
     document.getElementById('selected-user-id').innerText = id;
     document.getElementById('brugere').style.display = 'none';
-    document.getElementById('selected-mode').innerText = 'Din tilmelding';
-    document.getElementById('selected-mode-id').innerText = '1';
+    updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
 }
 
 function selectPlan(id, name){
     document.getElementById('selected-plan').innerText = name;
     document.getElementById('selected-plan-id').innerText = id;
     document.getElementById('planer').style.display = 'none';
-    if (id !== '-1'){
-        document.getElementById('selected-mode').innerText = 'Periode for planen';
-        document.getElementById('selected-mode-id').innerText = '2';
-        ajaxqueryplankalender();
-    }
+    updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
+}
+
+function updateMode(userid, planid){
+    var modestr = ["---", "Juster din egen kalender", "Vælg gyldige dage for planen", "Din kalender i perioden for planen"];
+    var mode = ((userid >= 0) ? 1 : 0) + ((planid >= 0) ? 2 : 0);
+    document.getElementById('selected-mode-id').innerText = mode;
+    document.getElementById('selected-mode').innerText = modestr[mode];
+    document.getElementById("valid-kalender-selector").style.display = (mode === 0) ? 'none' : 'block';
+    switch(mode){
+        case 1:
+            ajaxquerybrugerkalender();
+            break;
+        case 2:
+            ajaxqueryplankalender();
+            break;
+        case 3:
+            ajaxquerymode3kalender();
+            break;
+        };
+}
+
+function ajaxquerybrugerkalender() {
+    var update = {
+        "userid": document.getElementById('selected-user-id').innerText,
+        "planid": document.getElementById('selected-plan-id').innerText,
+        "modeid": document.getElementById('selected-mode-id').innerText
+    };
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var map = JSON.parse(this.responseText);
+            var alldays = document.querySelectorAll('[class="day"]');
+            alldays.forEach(element => {
+                element.style.background = (map.indexOf(element.id)===-1) ? '': _greenbg;
+            });
+        }
+    };
+    
+    xhttp.open("POST", "/ajaxquerybrugerkalender", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send(JSON.stringify(update));
 }
 
 function ajaxqueryplankalender() {
     var update = {
         "userid": document.getElementById('selected-user-id').innerText,
         "planid": document.getElementById('selected-plan-id').innerText,
-        "modeid": document.getElementById('selected-mode-id').innerText,
+        "modeid": document.getElementById('selected-mode-id').innerText
     };
 
     var xhttp = new XMLHttpRequest();
@@ -160,6 +210,64 @@ function ajaxqueryplankalender() {
     };
     
     xhttp.open("POST", "/ajaxqueryplankalender", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send(JSON.stringify(update));
+}
+
+function ajaxquerymode3kalender() {
+    var update = {
+        "userid": document.getElementById('selected-user-id').innerText,
+        "planid": document.getElementById('selected-plan-id').innerText,
+        "modeid": document.getElementById('selected-mode-id').innerText
+    };
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var rows = JSON.parse(this.responseText);
+            var html = "";
+            var ypos = 85;
+            var weekchange = 1;
+            rows.forEach( r=> {
+                if (r.day === 1){
+                    ypos = 34;
+                    weekchange = 1;
+                }
+                if (weekchange){
+                    var xoff = 285 * ((r.month - 1) % 4);
+                    var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
+                    if (r.weeknumber != 0){
+                        html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
+                    }
+                    weekchange = 0;
+                }
+                switch(r.record_type){
+                    case 'month':
+                        var xoff = 285 * ((r.month - 1) % 4);
+                        var yoff = 10 + 270 * Math.floor((r.month - 1) / 4);
+                        html += e(r, xoff, yoff, 'togglemonth(this)');
+                        break;
+                    case 'weekday':
+                        var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
+                        html += e(r, xoff, yoff, 'toggledayofweek(this)');
+                        break;
+                    case 'day':
+                        var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
+                        html += e(r, xoff, yoff + ypos, 'toggleday(this)');
+                        if (r.weekday === 7){
+                            ypos += 33;
+                            weekchange = 1;  
+                        }
+                        break;
+                }
+            });
+            document.getElementById("valid-kalender-selector").innerHTML = html;
+        }
+    };
+    
+    xhttp.open("POST", "/ajaxquerymode3kalender", true);
     xhttp.setRequestHeader("Content-Type", "application/json");
     xhttp.send(JSON.stringify(update));
 }
@@ -292,9 +400,13 @@ function ajaxtoggledays(count, ids) {
         }
     };
     
-    xhttp.open("POST", "/ajaxtoggleplandays", true);
-    xhttp.setRequestHeader("Content-Type", "application/json");
-    xhttp.send(JSON.stringify(update));
+    var mode2url=[null, "/ajaxtogglebrugerdays","/ajaxtoggleplandays",null];
+
+    if (mode2url[update.modeid] != null){
+        xhttp.open("POST", mode2url[update.modeid], true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify(update));
+    }
 }
 
 
@@ -303,4 +415,5 @@ function ajaxtoggledays(count, ids) {
 ************************************/
 ajaxquerybrugere();
 ajaxqueryplaner();
+updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
 ajaxquerykalender();
