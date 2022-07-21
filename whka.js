@@ -389,57 +389,6 @@ function ajaxquerymode3kalender() {
     xhttp.send(JSON.stringify(update));
 }
 
-function ajaxquerykalender() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            var rows = JSON.parse(this.responseText);
-            var html = "";
-            var ypos = 85;
-            var weekchange = 1;
-            rows.forEach( r=> {
-                if (r.day === 1){
-                    ypos = 34;
-                    weekchange = 1;
-                }
-                if (weekchange){
-                    var xoff = 285 * ((r.month - 1) % 4);
-                    var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                    if (r.weeknumber != 0){
-                        html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
-                    }
-                    weekchange = 0;
-                }
-                switch(r.record_type){
-                    case 'month':
-                        var xoff = 285 * ((r.month - 1) % 4);
-                        var yoff = 10 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff, 'togglemonth(this)','');
-                        break;
-                    case 'weekday':
-                        var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
-                        var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
-                        break;
-                    case 'day':
-                        var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
-                        var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff + ypos, 'toggleday(this)','');
-                        if (r.weekday === 7){
-                            ypos += 33;
-                            weekchange = 1;  
-                        }
-                        break;
-                }
-            });
-            document.getElementById("valid-kalender-selector").innerHTML = html;
-        }
-    };
-    
-    xhttp.open("POST", "/ajaxquerykalender", true);
-    xhttp.send();
-}
-
 function toggleday(e) {
     var ids = [];
     var count = 0;
@@ -685,4 +634,3 @@ function ajaxaddnewplan(){
 ajaxquerybrugere();
 ajaxqueryplaner();
 updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
-ajaxquerykalender();

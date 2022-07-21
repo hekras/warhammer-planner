@@ -446,17 +446,6 @@ app.post('/ajaxqueryplaner', function (req, res) {
     });
 });
 
-app.post('/ajaxquerykalender', function (req, res) {
-    pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
-        if (!err) {
-            res.send(result.rows);
-        }
-        else {
-            res.send("Error");
-        }
-    });
-});
-
 async function ajaxquerymode3kalender_handler(req, res) {
 
     var svar = {
