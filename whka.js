@@ -161,11 +161,9 @@ function updateMode(userid, planid){
             ajaxquerybrugerkalender();
             break;
         case 2:
-            ajaxquerykalender();
             ajaxqueryplankalender();
             break;
         case 3:
-            //console.log("ajaxquerymode3kalender-request")
             ajaxquerymode3kalender();
             break;
         };
