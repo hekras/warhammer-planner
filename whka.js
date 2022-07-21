@@ -165,7 +165,7 @@ function updateMode(userid, planid){
             ajaxqueryplankalender();
             break;
         case 3:
-            console.log("ajaxquerymode3kalender-request")
+            //console.log("ajaxquerymode3kalender-request")
             ajaxquerymode3kalender();
             break;
         };
@@ -265,7 +265,7 @@ function ajaxqueryplankalender() {
                     var xoff = 285 * ((monthoffset - 1) % 4);
                     var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
                     if (r.weeknumber != 0){
-                        html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
+                        html += e_weeknumber(r,xoff, yoff+ypos, 'plantoggleweek(this)');
                     }
                     weekchange = 0;
                 }
@@ -274,17 +274,17 @@ function ajaxqueryplankalender() {
                         monthoffset++;
                         var xoff = 285 * ((monthoffset - 1) % 4);
                         var yoff = 10 + 270 * Math.floor((monthoffset - 1) / 4);
-                        html += e(r, xoff, yoff, 'togglemonth(this)','');
+                        html += e(r, xoff, yoff, 'plantogglemonth(this)','');
                         break;
                     case 'weekday':
                         var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
                         var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
-                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
+                        html += e(r, xoff, yoff, 'plantoggledayofweek(this)','');
                         break;
                     case 'day':
                         var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
                         var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
-                        html += e(r, xoff, yoff + ypos, 'toggleday(this)', '');
+                        html += e(r, xoff, yoff + ypos, 'plantoggleday(this)', '');
                         if (r.weekday === 7){
                             ypos += 33;
                             weekchange = 1;  
@@ -297,7 +297,9 @@ function ajaxqueryplankalender() {
 //            console.log(JSON.stringify(svar.brugermap));
             var alldays = document.querySelectorAll('[class="day"]');
             alldays.forEach(element => {
-                element.style.background = (svar.planmap.indexOf(element.id)===-1) ? '': _greenbg;
+                element.style.color = (svar.planmap.indexOf(element.id)===-1) ? 'lightgray': '';
+                element.style.border= (svar.planmap.indexOf(element.id)===-1) ? '1px solid lightgray': '1px solid black';
+                //                element.style.background = (svar.planmap.indexOf(element.id)===-1) ? '': _greenbg;
             });
         }
     };
@@ -319,6 +321,7 @@ function ajaxquerymode3kalender() {
         if (this.readyState == 4 && this.status == 200) {
 //            document.getElementById("valid-kalender-selector").innerText = this.responseText;
             svar = JSON.parse(this.responseText);
+//            console.log(this.responseText);
             var rows = svar.kalender;
             var html = "";
             var ypos = 85;
@@ -333,7 +336,7 @@ function ajaxquerymode3kalender() {
                     var xoff = 285 * ((monthoffset - 1) % 4);
                     var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
                     if (r.weeknumber != 0){
-                        html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
+                        html += e_weeknumber(r,xoff, yoff+ypos, 'mode3toggleweek(this)');
                     }
                     weekchange = 0;
                 }
@@ -342,18 +345,18 @@ function ajaxquerymode3kalender() {
                         monthoffset++;
                         var xoff = 285 * ((monthoffset - 1) % 4);
                         var yoff = 10 + 270 * Math.floor((monthoffset - 1) / 4);
-                        html += e(r, xoff, yoff, 'togglemonth(this)','');
+                        html += e(r, xoff, yoff, 'mode3togglemonth(this)','');
                         break;
                     case 'weekday':
                         var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
                         var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
-                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
+                        html += e(r, xoff, yoff, 'mode3toggledayofweek(this)','');
                         break;
                     case 'day':
                         var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
                         var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
                         var dimmed = (svar.planmap.indexOf(r.html_id) === -1) ? '-dimmed' : '';
-                        var toggle = (svar.planmap.indexOf(r.html_id) === -1) ? '' : 'toggleday(this)';
+                        var toggle = (svar.planmap.indexOf(r.html_id) === -1) ? '' : 'mode3toggleday(this)';
                         html += e(r, xoff, yoff + ypos, toggle, dimmed);
                         if (r.weekday === 7){
                             ypos += 33;
@@ -368,6 +371,17 @@ function ajaxquerymode3kalender() {
             var alldays = document.querySelectorAll('[class="day"]');
             alldays.forEach(element => {
                 element.style.background = (svar.brugermap.indexOf(element.id)===-1) ? '': _greenbg;
+            });
+
+            alldays.forEach(element=>{
+                var count = 0;
+                svar.heatmap.forEach(r=>{
+                    if (r.calendar.indexOf(element.id) > -1) {count++;}
+                });
+                if (count > 0){
+                    console.log(element.id + ":" + count);
+                    element.innerHTML += '<div class="heat" style="left: ' + (element.style.left+2) +'px; top: ' + element.style.top +'px; ">' + count + '</div>';
+                }
             });
         }
     };
@@ -483,12 +497,128 @@ function toggledayofweek(e) {
     ajaxtoggledays(count, ids);
 }
 
+function mode3toggleday(e) {
+    var ids = [];
+    var count = 0;
+    count = (e.style.background != '') ? count + 1 : count;
+    ids.push(e.id);
+    ajaxtoggledays(count, ids);
+}
+
+function mode3togglemonth(e) {
+    var month = e.getAttribute('month');
+    var es = document.querySelectorAll('[month="' + month + '"]');
+    var ids = [];
+
+    var count = 0;
+    es.forEach(element => {
+        if ((element.getAttribute('day') != '0')&&
+            (element.getAttribute("class") === 'day')){
+            count = (element.style.background != '') ? count + 1 : count;
+            ids.push(element.id);
+        }
+    });
+    ajaxtoggledays(count, ids);
+}
+
+function mode3toggleweek(e) {
+    var week = e.getAttribute('week');
+    var es = document.querySelectorAll('[week="' + week + '"]');
+    var ids = [];
+
+    var count = 0;
+    es.forEach(element => {
+            if ((element.getAttribute('day') != '0')&&
+                (element.getAttribute("class") === 'day')){
+                count = (element.style.background != '') ? count + 1 : count;
+                ids.push(element.id);
+        }
+    });
+
+    ajaxtoggledays(count, ids);
+}
+
+function mode3toggledayofweek(e) {
+    var month = e.getAttribute('month');
+    var es = document.querySelectorAll('[month="' + month + '"]');
+    var dayofweek = e.getAttribute('dayofweek');
+    var ids = [];
+
+    var count = 0;
+    es.forEach(element => {
+        if ((element.getAttribute('day') != '0') &&
+            (element.getAttribute('dayofweek') === dayofweek)&&
+            (element.getAttribute("class") === 'day')){
+            count = (element.style.background != '') ? count + 1 : count;
+            ids.push(element.id);
+        }
+    });
+    ajaxtoggledays(count, ids);
+}
+
+function plantoggleday(e) {
+    var ids = [];
+    var count = 0;
+    count = (e.style.color === '') ? count + 1 : count;
+    ids.push(e.id);
+//    console.log("plantoggleday:" + JSON.stringify(ids));
+    ajaxtoggledays(count, ids);
+}
+
+function plantogglemonth(e) {
+    var month = e.getAttribute('month');
+    var es = document.querySelectorAll('[month="' + month + '"]');
+    var ids = [];
+
+    var count = 0;
+    es.forEach(element => {
+        if (element.getAttribute('day') != '0') {
+            count = (element.style.color === '') ? count + 1 : count;
+            ids.push(element.id);
+        }
+    });
+    ajaxtoggledays(count, ids);
+}
+
+function plantoggleweek(e) {
+    var week = e.getAttribute('week');
+    var es = document.querySelectorAll('[week="' + week + '"]');
+    var ids = [];
+
+    var count = 0;
+    es.forEach(element => {
+        if (element.getAttribute('day') != '0') {
+            count = (element.style.color === '') ? count + 1 : count;
+            ids.push(element.id);
+        }
+    });
+    ajaxtoggledays(count, ids);
+}
+
+function plantoggledayofweek(e) {
+    var month = e.getAttribute('month');
+    var es = document.querySelectorAll('[month="' + month + '"]');
+    var dayofweek = e.getAttribute('dayofweek');
+    var ids = [];
+
+    var count = 0;
+    es.forEach(element => {
+        if ((element.getAttribute('day') != '0') &&
+            (element.getAttribute('dayofweek') === dayofweek)) {
+            count = (element.style.color === '') ? count + 1 : count;
+            ids.push(element.id);
+        }
+    });
+    ajaxtoggledays(count, ids);
+}
+
+
 function ajaxtoggledays(count, ids) {
     var bg = (count > 0) ? 'clear' : 'set';
     var update = {
         "userid": document.getElementById('selected-user-id').innerText,
         "planid": document.getElementById('selected-plan-id').innerText,
-        "modeid": document.getElementById('selected-mode-id').innerText,
+        "modeid": parseInt(document.getElementById('selected-mode-id').innerText, 10),
         "command": bg,
         "ids": ids
     };
@@ -499,9 +629,24 @@ function ajaxtoggledays(count, ids) {
 //            ajaxqueryplankalender();
             var map = JSON.parse(this.responseText);
             var alldays = document.querySelectorAll('[class="day"]');
-            alldays.forEach(element => {
-                element.style.background = (map.indexOf(element.id)===-1) ? '': _greenbg;
-            });
+            switch(update.modeid){
+                case 1:
+                    alldays.forEach(element => {
+                        element.style.background = (map.indexOf(element.id)===-1) ? '': _greenbg;
+                    });
+                    break;
+                case 2:
+                    alldays.forEach(element => {
+                        element.style.color = (map.indexOf(element.id)===-1) ? 'lightgray': '';
+                        element.style.border= (map.indexOf(element.id)===-1) ? '1px solid lightgray': '1px solid black';
+                    });
+                    break;
+                case 3:
+                    alldays.forEach(element => {
+                        element.style.background = (map.indexOf(element.id)===-1) ? '': _greenbg;
+                    });
+                    break;
+            }
         }
     };
     
@@ -514,6 +659,27 @@ function ajaxtoggledays(count, ids) {
     }
 }
 
+function ajaxaddnewplan(){
+    var update = {
+        "planname": document.getElementById('newplanname').value,
+    };
+    console.log(update.planname);
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var id = JSON.parse(this.responseText);
+            console.log(id.id);
+            selectPlan(id.id, update.planname);
+            ajaxqueryplaner();
+        }
+    };
+    
+    xhttp.open("POST", "/ajaxaddnewplan", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send(JSON.stringify(update));
+    document.getElementById("addplandialog").style.display = 'none';
+}
 
 /***********************************
 // main - program starts here !!!!!!

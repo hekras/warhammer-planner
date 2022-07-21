@@ -350,7 +350,6 @@ function updatePlanCalender(planid, map) {
 
 app.post('/ajaxtoggleplandays', function (req, res) {
     var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";"
-    console.log(sql);
     pool.query(sql, (err, result) => {
         if (!err) {
             if (result.rowCount == 1) {
@@ -402,6 +401,7 @@ function updateBrugerCalender(userid, map) {
 }
 
 app.post('/ajaxtogglebrugerdays', function (req, res) {
+//    console.log(req.body);
     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
     console.log(sql);
     pool.query(sql, (err, result) => {
@@ -472,7 +472,8 @@ async function ajaxquerymode3kalender_handler(req, res) {
         "monthmap": [],
         "planmap" : [],
         "kalender": [],
-        "brugermap": []
+        "brugermap": [],
+        "heatmap": []
     };
     var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
     let plankalender;
@@ -504,14 +505,15 @@ async function ajaxquerymode3kalender_handler(req, res) {
     try {
         const { rows } = await pool.query(sql);
         kalenderen = rows;
+        svar.kalender = kalenderen;
     }
     catch {
+        svar.kalender = [];
         console.log('ERROR :' + sql);
-        return res.status(500).send();
     }
-    svar.kalender = kalenderen;
+    console.log(svar.kalender);
 
-     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
     let brugermap;
     try {
         const { rows } = await pool.query(sql);
@@ -522,6 +524,16 @@ async function ajaxquerymode3kalender_handler(req, res) {
         return res.status(500).send();
     }
     svar.brugermap = brugermap[0].calendar;
+
+    var sql = "SELECT id, calendar FROM brugere WHERE id IN (19,21,22,23,24,25,26,27);"
+    try {
+        const { rows } = await pool.query(sql);
+        svar.heatmap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
  
 //    console.log(kalenderen);
     return res.send(svar);
@@ -539,6 +551,19 @@ app.post('/ajaxquerymode3kalender', function (req, res) {
         }
     });
  */});
+
+app.post('/ajaxaddnewplan', function (req, res) {
+
+     pool.query("INSERT INTO planer (name, type, calendar) VALUES ('" + 
+                req.body.planname + "', 'event-planner', '{}') RETURNING id;", (err, result) => {
+        if (!err) {
+            res.send(result.rows[0]);
+        }
+        else {
+            res.send("Error");
+        }
+    });
+});
 
 app.listen(PORT, function () {
     console.log(`Listening on ${PORT}`);
