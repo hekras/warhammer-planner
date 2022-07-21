@@ -4,13 +4,19 @@ const express = require('express');
 var fs = require('fs');
 
 const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+    }
+});
+/* const pool = new Pool({
     user: 'sqlmaster',
     host: 'localhost',
     database: 'warhammer_planner',
     password: '-Zx12131415',
     port: 5432,
 });
-
+ */
 const PORT = process.env.PORT || 8080
 var app = express();
 app.use(express.json());
@@ -27,6 +33,7 @@ var mime = {
     js: 'application/javascript'
 };
 
+
 /** add plans to DB /
 var planer = [
     {name:"Warhammer, august", type:"event-planner", uuid:"1", valid_dates:[], final_date:"n/a"},
@@ -42,9 +49,9 @@ planer.forEach(e =>{
 })
 /**/
 
-/** ADD names to DB /
+/** ADD names to DB */
+function initbrugeretable(){
 var names = [
-    {"name":"Org", "role":"*", "id":"eff26981-f88b-4a6b-b2fb-caeadb6b2c4b"},
     {"name":"GM", "role":"", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
     {"name":"Finn", "role":"", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
     {"name":"Undick", "role":"", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
@@ -61,7 +68,7 @@ names.forEach(e =>{
       })
 })
 /**/
-
+}
 // Returns the ISO week of the date.
 Date.prototype.getWeek = function () {
     var date = new Date(this.getTime());
@@ -73,20 +80,6 @@ Date.prototype.getWeek = function () {
     // Adjust to Thursday in week 1 and count number of weeks from date to week1.
     return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
         - 3 + (week1.getDay() + 6) % 7) / 7);
-}
-
-function renderMainMenu() {
-    var xpos = 2;
-    var str = e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-plus-o"></i>', 'c', 'setGUI(0)', '');
-    xpos += 35;
-    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-check-o"></i>', 'c', 'setGUI(1)', '');
-    xpos += 35;
-    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-pencil"></i>', 'c', 'setGUI(2)', '');
-    xpos += 35;
-    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-users"></i>', 'c', 'setGUI(3)', '');
-    xpos += 35;
-    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-list"></i>', 'c', 'setGUI(4)', '');
-    return str;
 }
 
 // valid date
@@ -102,7 +95,7 @@ function genId(year,month,weekday,weeknumber,day,event_index){
 */
 
 
-/** ADD calender records to DB /
+/** ADD calender records to DB */
 const dag = new Date();
 const km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
 const kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
@@ -158,12 +151,11 @@ function createKalenderTable(res, year, event_index){
 
 // create records in kalender table 
 app.get('/qw', function (req, res) {
-    var str = renderBegin();
-    str += createKalenderTable(res, 2022, 0);
-    str += renderEnd();
+    var str = createKalenderTable(res, 2022, 0);
+    initbrugeretable();
     res.send(str);
 });
-*/
+
 
 app.get('/', function (req, res) {
     //    year = '2022';
@@ -183,7 +175,6 @@ app.get('/', function (req, res) {
         res.status(404).end('Not found');
     });
 });
-
 
 app.get('/ttt', function (req, res) {
     var sql = "SELECT calendar FROM brugere WHERE name='Org';";
