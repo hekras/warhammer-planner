@@ -1,8 +1,17 @@
 var path = require('path');
+const { Pool } = require('pg');
 const express = require('express');
 var fs = require('fs');
 
-const PORT = process.env.PORT || 8000
+const pool = new Pool({
+    user: 'sqlmaster',
+    host: 'localhost',
+    database: 'warhammer_planner',
+    password: '-Zx12131415',
+    port: 5432,
+});
+
+const PORT = process.env.PORT || 8080
 var app = express();
 app.use(express.json());
 
@@ -18,8 +27,22 @@ var mime = {
     js: 'application/javascript'
 };
 
-const dag = new Date();
+/** add plans to DB /
+var planer = [
+    {name:"Warhammer, august", type:"event-planner", uuid:"1", valid_dates:[], final_date:"n/a"},
+    {name:"Warhammer, september", type:"", uuid:"2", valid_dates:[], final_date:"n/a"},
+    {name:"Warhammer, oktober", type:"", uuid:"3", valid_dates:[], final_date:"n/a"},
+    {name:"Warhammer, november", type:"", uuid:"4", valid_dates:[], final_date:"n/a"}
+];
 
+planer.forEach(e =>{
+    pool.query("INSERT INTO planer (name, type, calendar) VALUES ('" + e.name + "', '" + e.type + "', '{}')", (err, res) => {
+        console.log(err, res)
+      })
+})
+/**/
+
+/** ADD names to DB /
 var names = [
     {"name":"Org", "role":"*", "id":"eff26981-f88b-4a6b-b2fb-caeadb6b2c4b"},
     {"name":"GM", "role":"", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
@@ -32,337 +55,82 @@ var names = [
     {"name":"Odrick", "role":"", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
 ];
 
-var db=[];
-var valid_ids=[];
-var current_user = names[0];
-var db_filename = path.join(__dirname,"/databasen.json");
-var heatmap=[];
-
-function update_heat(){
-    db.forEach(user => {
-        if (user.role != ""){
-            valid_ids = [];
-            valid_ids = valid_ids.concat(user.ids);
-        }
-    });
-
-    heatmap=[];
-    valid_ids.forEach(id => {
-        var rec = {
-            "id": id,
-            "count": 0
-        };        
-        db.forEach(user => {
-            if ((user.role == "")&&(user.ids.indexOf(id) >=0)){
-                rec.count++;
-            }
-        });
-        heatmap.push(rec);
-    });
-}
-
-function init_db(){
-    fs.readFile(db_filename, 'utf8', function (err, data) {
-        if (!err){
-            db = JSON.parse(data);
-            update_heat();
-        }
-        else{
-            names.forEach(element => {
-                if (element.name != ""){
-                    db.push({
-                        "user": element.name,
-                        "userid": element.id,
-                        "role": element.role,
-                        "ids":[]
-                    });
-                }
-            });
-        }
-    });
-}
-
-function write_db(){
-    fs.writeFile (db_filename, JSON.stringify(db), function(err) {
-        if (err){
-            console.log("db write didnt work!!");
-        }
-    });
-}
-
-function e(el, id, x, y, width, height, fontsize, borderthickness, borderstyle, text, verticalallign, onclick, oninput)
-{
-    var str_aa = '';
-    var str_ab = '';
-    switch (el) {
-        case 'init':
-            str_aa = 
-            '<!DOCTYPE html>' +
-            '<html>' +
-                '<title>Warhammer planneren</title>' +
-                '<head>' +
-                '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">' +
-                '<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">' +
-                '<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">' +
-//                '<link rel="stylesheet" href="/css/w3css/w3.css">' +
-            '<style>' +
-                '.center {' +
-                    'margin: 0;' +
-                    'position: absolute;' +
-                    'top: 50%;' +
-                    'left: 50%;' +
-                    '-ms-transform: translate(-50%, -50%);' +
-                    'transform: translate(-50%, -50%);' +
-                '}' +
-            '</style>' +
-                '</head>' +
-                '<body><html>';
-            break;
-        case 'end':
-            str_aa = 
-            '<script src="/samverskalenderen.js"></script>' +
-            '</body>';
-            break;
-        case 'l':
-        case 'label':
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: ' + borderthickness + 'px ' + borderstyle + ';">';
-            str_ab = '</div>';
-            break;
-        case 'heat':
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px;"' + 
-                'id="' + id + '" ' +
-                '>';
-            str_ab = '</div>';
-            break;
-        case 'b':
-        case 'button':
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: ' + borderthickness + 'px ' + borderstyle + '; ' +
-                'cursor: pointer;"' +
-                'onclick="' + onclick + '">';
-            str_ab = '</div>';
-            break;
-        case 'bround':
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'border-radius: 3px;' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: 2px solid black; ' +
-                'cursor: pointer;"' +
-                'id="' + id + '" ' +
-                'onclick="' + onclick + '">';
-            str_ab = '</div>';
-            break;
-        case 'bround_year':
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'border-radius: 3px;' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: 2px solid black; ' +
-                'cursor: pointer;"' +
-                'onclick="' + onclick + '">';
-            str_ab = '</div>';
-            break;
-        case 'bday':
-            var timestamp = id.split('-');
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'border-radius: 2px;' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: ' + borderthickness + 'px ' + borderstyle + '; ' +
-                'cursor: pointer;"' +
-                'id="' + id + '" ' +
-                'year="' + timestamp[1] + '" ' +
-                'month="' + timestamp[2] + '" ' +
-                'day="' + timestamp[3] + '" ' +
-                'week="' + timestamp[4] + '" ' +
-                'dayofweek="' + timestamp[5] + '" ' +
-                'onclick="' + onclick + '">';
-            str_ab = '</div>';
-            break;
-        case 'bday-hidden':
-            str_aa = '<div style="' +
-                'box-sizing: border-box; ' +
-                'color: lightgray; ' +
-                'border-radius: 2px;' +
-                'position: absolute; ' +
-                'overflow: hidden; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: ' + borderthickness + 'px ' + borderstyle + '; ' +
-                '">';
-            str_ab = '</div>';
-            break;
-        case 'i':
-        case 'input':
-            str_aa = '<input type="text" id="' + id +
-                '" oninput="' + oninput +
-                '" onclick="' + onclick + '" ' +
-                'style="position: absolute; ' +
-                'left: ' + x + 'px; ' +
-                'top: ' + y + 'px; ' +
-                'width: ' + width + 'px; ' +
-                'height: ' + height + 'px; ' +
-                'font-size: ' + fontsize + 'px; ' +
-                'border: ' + borderthickness + 'px ' + borderstyle + '; ' +
-                'cursor: pointer;" ' +
-                'value="' + text + '">';
-            str_ab = '';
-            break;
-    }
-
-    var ret = '';
-    switch (verticalallign) {
-        case 'c':
-        case 'center':
-            ret = str_aa +
-                '<span style="' +
-                'margin: 0; ' +
-                'position: absolute; ' +
-                'top: 50%; ' +
-                'left: 50%; ' +
-                'margin-right: -50%;' +
-                'transform: translate(-50%, -50%); ' +
-                'text-align: center; ">' +
-                text +
-                '</span>' +
-                str_ab;
-            break;
-        case '%':
-            ret = str_aa + str_ab;
-            break;
-        default:
-            ret = str_aa + text + str_ab;
-            break;
-    }
-    return ret;
-}
+names.forEach(e =>{
+    pool.query("INSERT INTO brugere (name, calendar) VALUES ('" + e.name + "', '{}')", (err, res) => {
+        console.log(err, res)
+      })
+})
+/**/
 
 // Returns the ISO week of the date.
-Date.prototype.getWeek = function() {
-  var date = new Date(this.getTime());
-  date.setHours(0, 0, 0, 0);
-  // Thursday in current week decides the year.
-  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-  // January 4 is always in week 1.
-  var week1 = new Date(date.getFullYear(), 0, 4);
-  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
-  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
-                        - 3 + (week1.getDay() + 6) % 7) / 7);
+Date.prototype.getWeek = function () {
+    var date = new Date(this.getTime());
+    date.setHours(0, 0, 0, 0);
+    // Thursday in current week decides the year.
+    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+    // January 4 is always in week 1.
+    var week1 = new Date(date.getFullYear(), 0, 4);
+    // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
+        - 3 + (week1.getDay() + 6) % 7) / 7);
 }
 
-
-function renderCalendar(res, year, userid){
-    var str = e('init', '', 0, 0, 0, 0, 0, '', '', '', '', '');
+function renderMainMenu() {
     var xpos = 2;
-//    str += e('bround', 'previous-year', xpos, 5, 32, 32, 29, 0, '', '&#10094;', 'c', 'setyear(' + (parseInt(year,10) - 1) + ')', '');
+    var str = e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-plus-o"></i>', 'c', 'setGUI(0)', '');
     xpos += 35;
-    str += e('l', '', xpos, 5, 90, 32, 29, 0, '', year, 'c', '', '');
-    xpos += 92;
-//    str += e('bround', 'next-year', xpos, 5, 32, 32, 29, 0, '', '&#10095;', 'c', 'setyear(' + (parseInt(year,10) + 1) + ')', '');
-    xpos += 100;
-    names.forEach(element => {
-        var star = (element.role !== "") ? " " + element.role : "";
-        str += e('bround', element.id, xpos, 5, 75, 32, 12, 0, '', element.name + star, 'c', 'setUser(this)', '');
-        xpos += 92;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-check-o"></i>', 'c', 'setGUI(1)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-pencil"></i>', 'c', 'setGUI(2)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-users"></i>', 'c', 'setGUI(3)', '');
+    xpos += 35;
+    str += e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-list"></i>', 'c', 'setGUI(4)', '');
+    return str;
+}
+
+// valid date
+// id=timestamp-year-month-0-0-0                  : month header
+// id=timestamp-year-month-0-0-weekday            : week day header
+// id=timestamp-year-month-0-weeknumber-0         : weeknumber
+// id=timestamp-year-month-day-weeknumber-weekday : day
+
+/* delete...
+function genId(year,month,weekday,weeknumber,day,event_index){
+    return 'timestamp-' + year + '-' + month + '-' + weekday + '-' + weeknumber + '-' + day + '-' + event_index;
+}
+*/
+
+
+/** ADD calender records to DB /
+const dag = new Date();
+const km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+const kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
+
+function insertKalenderRecord(recordType, year, month, day, weeknumber, weekday, text){
+    var str = "INSERT INTO kalender (html_id, record_type, year, month, day, weeknumber, weekday, str) VALUES (" +
+              "'" + recordType + "-" + year + "-" + month + "-" + day + "-" + weeknumber + "-" + weekday + "', " +
+              "'" + recordType + "', " +
+              year + ", " + month + ", " + day + ", " + weeknumber + ", " + weekday + ", '" + text + "');";
+    pool.query(str, (err, res) => {
+    console.log(err, res)
     });
+        
+    return str + "<br>";
+}
 
-//    str += e('bround', "current_user", xpos, 5, 75, 32, 12, 0, '', userid, 'c', 'testopen()', '');
-    str += '<div id="current_user" style="display: none;">' + userid + '</div>';
-    xpos += 92;
+function createKalenderTable(res, year, event_index){
+    var str = "";
+    valid_months = [1,2,3,4,5,6,7,8,9,10,11,12];
 
-    var km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-    var kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
-
-    var user_record = null; 
-    db.forEach(e => {
-        if (e.userid === userid){
-            user_record = e;
-        }
-    });
-    var valid_months = [];
-    if (user_record.role != ""){
-        valid_months = [1,2,3,4,5,6,7,8,9,10,11,12];
-    }
-    else{
-        valid_ids.forEach(id => {
-            var m = parseInt(id.split('-')[2], 10);
-            if (valid_months.indexOf(m) === -1) {
-                valid_months.push(m);
-            }
-        });
-    }
-    valid_months.sort(function(a, b) {
-        return a - b;
-      });
-
-    var mm = 1;
     valid_months.forEach(m => {
-        var hw = 60;
-        var xoff = 285 * ((mm - 1) % 4);
-        var yoff = 40 + 270 * Math.floor((mm - 1) / 4);
-    
 // render month
-        var id = 'timestamp-' + year + '-' + m + '-' + 0 + '-' + 0 + '-' + 0;
-        str += e('bday', id, xoff, 20 + yoff, 300, 32, 20, 1, '', km[m - 1], 'c', 'togglemonth(this)', '');
-
+        str += insertKalenderRecord('month', year, m, 0, 0, 0, km[m - 1]);
 // rendering daynames
         for (var dd = 1; dd < 8; dd++) {
-            var ypos = 50;
-            var xpos = 2 + dd * 33;
-            var id = 'timestamp-' + year + '-' + m + '-' + 0 + '-' + 0 + '-' + dd;
-            str += e('bday', id, xpos + xoff, ypos + yoff, 32, 32, 12, 1, 'solid black', kd[dd - 1], 'c', 'toggledayofweek(this)', '');
+            str += insertKalenderRecord('weekday', year, m, 0, 0, dd, kd[dd - 1]);
         }
-
 // rendering small calendar
-        var ypos = 85;
-        var ypos2 = 50;
         var weekchange = true;
         dag.setFullYear(year,m,0);
         var num_days = dag.getDate();
@@ -372,58 +140,35 @@ function renderCalendar(res, year, userid){
             sd = (sd === 0) ? 7 : sd;
             if (weekchange) {
                 weeknumber = dag.getWeek();
-                var id = 'timestamp-' + year + '-' + 0 + '-' + 0 + '-' + weeknumber + '-' + 0;
-                str += e('bday', id, 2 + xoff, ypos + yoff, 32, 31, 12, 1, 'solid black', weeknumber, 'c', 'toggleweek(this)', '');
+//                str += insertKalenderRecord('weeknumber', 2022, 0, 0, weeknumber, 0, weeknumber);
                 weekchange = false;
             }
-            var id = 'timestamp-' + year + '-' + m + '-' + dd + '-' + weeknumber + '-' + sd;
-            xpos = 2 + sd * 33;
-            if (user_record.role != ""){
-                str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
-                heatmap.forEach(rec => {
-                    if (rec.id == id){
-                        str += e('heat', id+'heat', xpos + xoff + 22, ypos + yoff + 20, 10, 10, 8, 1, '', rec.count, '', '', '');
-                    }
-                });
-            }
-            else if (valid_ids.indexOf(id) >= 0) {
-                str += e('bday', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid black', dd, 'c', 'toggleday(this)', '');
-                heatmap.forEach(rec => {
-                    if (rec.id == id){
-                        str += e('heat', id+'heat', xpos + xoff + 22, ypos + yoff + 20, 10, 10, 8, 1, '', rec.count, '', '', '');
-                    }
-                });
-            }
-            else{
-                str += e('bday-hidden', id, xpos + xoff, ypos + yoff, 32, 31, 18, 1, 'solid lightgray', dd, 'c', '', '');
-            }
+            str += insertKalenderRecord('day', year, m, dd, weeknumber, sd, dd);
             switch(sd){
                 case 7: // sunday
-                    ypos += 33;
-                    ypos2 += (hw + 1) * 3;
                     weekchange = true;
                     weeknumber++;
                     break;
             }
         }
-        mm++;
     });
 
-    str += e('end', '', 0, 0, 0, 0, 0, '', '', '', '', '');
-    res.send(str);
+    return str;
 }
 
-init_db();
+// create records in kalender table 
+app.get('/qw', function (req, res) {
+    var str = renderBegin();
+    str += createKalenderTable(res, 2022, 0);
+    str += renderEnd();
+    res.send(str);
+});
+*/
 
 app.get('/', function (req, res) {
-    year = '2022';
-    var userid = (req.query.userid != null) ? req.query.userid : names[0].id;
-
-    renderCalendar(res, year, userid);
-});
-
-app.get('*', function (req, res) {
-    var file = path.join(dir, req.path.replace(/\/$/, '/index.html'));
+    //    year = '2022';
+    //    renderGUI(res, year, 0);
+    var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
     if (file.indexOf(dir + path.sep) !== 0) {
         return res.status(403).end('Forbidden');
     }
@@ -439,39 +184,389 @@ app.get('*', function (req, res) {
     });
 });
 
-app.post('/ajaxtoggledays', function(req, res){
-    var update = req.body;
-    var user_record = null;
-    
-    db.forEach(e => {
-        if (e.userid === update.userid){
-            user_record = e;
+
+app.get('/ttt', function (req, res) {
+    var sql = "SELECT calendar FROM brugere WHERE name='Org';";
+    console.log(sql);
+    pool.query(sql, (err, result) => {
+        if (!err) {
+            console.log(result.rows[0].calendar);
+            res.send(result.rows[0].calendar);
+        }
+        else {
+            console.log(err);
+            res.send("Error");
         }
     });
+});
 
-    if (user_record != null){
-        if (update.command === ''){
-            update.ids.forEach(e => {
-                user_record.ids = user_record.ids.filter(a => e!== a);
-            });
-        }
-        else{
-            user_record.ids = user_record.ids.concat(update.ids);
-        }
-        update_heat();
-
-        var map = {
-            "ids": user_record.ids,
-            "heatmap": heatmap
-        };
-
-        res.send(map);
-        write_db();
+app.get('*', function (req, res) {
+    var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
+    if (file.indexOf(dir + path.sep) !== 0) {
+        return res.status(403).end('Forbidden');
     }
+    var type = mime[path.extname(file).slice(1)] || 'text/plain';
+    var s = fs.createReadStream(file);
+    s.on('open', function () {
+        res.set('Content-Type', type);
+        s.pipe(res);
+    });
+    s.on('error', function () {
+        res.set('Content-Type', 'text/plain');
+        res.status(404).end('Not found');
+    });
+});
+
+app.post('/ajaxtoggledays', function (req, res) {
+    var update = req.body;
+    var str = "ARRAY[";
+    update.ids.forEach(e => {
+        str += "'" + e + "',";
+    })
+    str = str.substring(0, str.length - 1) + "]";
+    //    var sql = "SELECT id FROM kalender WHERE html_id IN ('day-2022-1-15-2-6', 'day-2022-1-16-2-7');";
+    var sql = "UPDATE brugere SET calendar=" + str + " WHERE id=" + update.userid + ";"
+    //var sql = "SELECT id FROM kalender WHERE html_id IN " + str + ";";
+    console.log(sql);
+    pool.query(sql, (err, result) => {
+        if (!err) {
+            console.log(result.rows);
+            res.send(result.rows);
+        }
+        else {
+            console.log(err);
+            res.send("Error");
+        }
+    });
+    /*
+          pool.query("UPDATE brugere SET calendar='" + update.ids + "' WHERE id="+update.userid+";", (err, result) => {
+            if (!err){
+                res.send(result.rows);
+            }
+            else{
+                res.send("Error");
+            }
+          });
+    */
+});
+
+async function ajaxqueryplankalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": []
+    };
+    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
+    let plankalender;
+    try {
+        const { rows } = await pool.query(sql);
+        plankalender = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.planmap = plankalender[0].calendar;
+    
+    sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.kalender = kalenderen;
+ 
+//    console.log(kalenderen);
+    return res.send(svar);
+}
+
+app.post('/ajaxqueryplankalender', function (req, res) {
+    ajaxqueryplankalender_handler(req, res);
+});
+
+
+async function ajaxquerybrugerkalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": []
+    };
+
+    sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.kalender = kalenderen;
+
+     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    let brugermap;
+    try {
+        const { rows } = await pool.query(sql);
+        brugermap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.brugermap = brugermap[0].calendar;
+ 
+//    console.log(kalenderen);
+    return res.send(svar);
+}
+
+
+app.post('/ajaxquerybrugerkalender', function (req, res) {
+    ajaxquerybrugerkalender_handler(req, res);
+});
+
+function updatePlanCalender(planid, map) {
+    var str = "ARRAY[ ";
+    map.forEach(e => {
+        str += "'" + e + "',";
+    })
+    str = str.substring(0, str.length - 1) + "]::text[]";
+    var sql = "UPDATE planer SET calendar=" + str + " WHERE id=" + planid + ";"
+    pool.query(sql, (err, result) => {
+        if (err) {
+            console.log("FAIL - updatePlanCalender");
+            console.log(sql);
+        }
+    });
+}
+
+app.post('/ajaxtoggleplandays', function (req, res) {
+    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";"
+    pool.query(sql, (err, result) => {
+        if (!err) {
+            if (result.rowCount == 1) {
+                /*  console.log("-----------------------");
+                 console.log(result.rows[0].calendar);
+                 console.log(req.body.command); */
+                var map = req.body.ids;
+                /* console.log(map); */
+                if (req.body.command === 'set') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) < 0) {
+                            result.rows[0].calendar.push(e);
+                            /* console.log("pushing:" + e); */
+                        }
+                    });
+                }
+                else if (req.body.command === 'clear') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) >= 0) {
+                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e), 1);
+                            /* console.log("Slicing:" + e); */
+                        }
+                    });
+                }
+                updatePlanCalender(req.body.planid, result.rows[0].calendar);
+                res.send(result.rows[0].calendar);
+            }
+        }
+        else {
+            console.log(err);
+            res.send("Error");
+        }
+    });
+});
+
+function updateBrugerCalender(userid, map) {
+    var str = "ARRAY[ ";
+    map.forEach(e => {
+        str += "'" + e + "',";
+    })
+    str = str.substring(0, str.length - 1) + "]::text[]";
+    var sql = "UPDATE brugere SET calendar=" + str + " WHERE id=" + userid + ";"
+    pool.query(sql, (err, result) => {
+        if (err) {
+            console.log("FAIL - updateBrugerCalender");
+            console.log(sql);
+        }
+    });
+}
+
+app.post('/ajaxtogglebrugerdays', function (req, res) {
+//    console.log(req.body);
+    var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    console.log(sql);
+    pool.query(sql, (err, result) => {
+        if (!err) {
+            if (result.rowCount == 1) {
+                /*  console.log("-----------------------");
+                 console.log(result.rows[0].calendar);
+                 console.log(req.body.command); */
+                var map = req.body.ids;
+                /* console.log(map); */
+                if (req.body.command === 'set') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) < 0) {
+                            result.rows[0].calendar.push(e);
+                            /* console.log("pushing:" + e); */
+                        }
+                    });
+                }
+                else if (req.body.command === 'clear') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) >= 0) {
+                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e), 1);
+                            /* console.log("Slicing:" + e); */
+                        }
+                    });
+                }
+                updateBrugerCalender(req.body.userid, result.rows[0].calendar);
+                res.send(result.rows[0].calendar);
+            }
+        }
+        else {
+            console.log(err);
+            res.send("Error");
+        }
+    });
+});
+
+app.post('/ajaxquerybrugere', function (req, res) {
+    pool.query("SELECT id, name FROM brugere ORDER BY name", (err, result) => {
+        if (!err) {
+            res.send(result.rows);
+        }
+    });
+});
+
+app.post('/ajaxqueryplaner', function (req, res) {
+    pool.query("SELECT id, name, type, final_date FROM planer ORDER BY final_date;", (err, result) => {
+        if (!err) {
+            res.send(result.rows);
+        }
+    });
+});
+
+app.post('/ajaxquerykalender', function (req, res) {
+    pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
+        if (!err) {
+            res.send(result.rows);
+        }
+        else {
+            res.send("Error");
+        }
+    });
+});
+
+async function ajaxquerymode3kalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": [],
+        "heatmap": []
+    };
+    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
+    let plankalender;
+    try {
+        const { rows } = await pool.query(sql);
+        plankalender = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    plankalender[0].calendar.forEach(r => {
+        var split = r.split('-');
+        var key = split[1] + '-' + split[2];
+        var ix = svar.monthmap.findIndex(e => e.key === key);
+        if (ix === -1) {
+            svar.monthmap.push({ "key": key, "year": split[1], "month": split[2] });
+        }
+        svar.planmap.push(r);
+    });
+
+    var where = "";
+    svar.monthmap.forEach(d => {
+        where += "OR (year=" + d.year + " AND month=" + d.month + ") ";
+    });
+    where = where.substring(2).trim();
+    sql = "SELECT * FROM kalender WHERE " + where + " ORDER BY year,month,day,weeknumber,weekday;";
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+        svar.kalender = kalenderen;
+    }
+    catch {
+        svar.kalender = [];
+        console.log('ERROR :' + sql);
+    }
+    console.log(svar.kalender);
+
+    var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    let brugermap;
+    try {
+        const { rows } = await pool.query(sql);
+        brugermap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.brugermap = brugermap[0].calendar;
+
+    var sql = "SELECT id, calendar FROM brugere WHERE id IN (19,21,22,23,24,25,26,27);"
+    try {
+        const { rows } = await pool.query(sql);
+        svar.heatmap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+ 
+//    console.log(kalenderen);
+    return res.send(svar);
+}
+
+app.post('/ajaxquerymode3kalender', function (req, res) {
+    ajaxquerymode3kalender_handler(req, res);
+
+/*     pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
+        if (!err) {
+            res.send(result.rows);
+        }
+        else {
+            res.send("Error");
+        }
+    });
+ */});
+
+app.post('/ajaxaddnewplan', function (req, res) {
+
+     pool.query("INSERT INTO planer (name, type, calendar) VALUES ('" + 
+                req.body.planname + "', 'event-planner', '{}') RETURNING id;", (err, result) => {
+        if (!err) {
+            res.send(result.rows[0]);
+        }
+        else {
+            res.send("Error");
+        }
+    });
 });
 
 app.listen(PORT, function () {
-    console.log(`Listening on ${ PORT }`);
+    console.log(`Listening on ${PORT}`);
 
 });
 
