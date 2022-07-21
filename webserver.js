@@ -1,5 +1,5 @@
 var path = require('path');
-const {Pool} = require('pg');
+const { Pool } = require('pg');
 const express = require('express');
 var fs = require('fs');
 
@@ -10,7 +10,7 @@ const pool = new Pool({
     password: '-Zx12131415',
     port: 5432,
 });
-  
+
 const PORT = process.env.PORT || 8080
 var app = express();
 app.use(express.json());
@@ -63,7 +63,7 @@ names.forEach(e =>{
 /**/
 
 // Returns the ISO week of the date.
-Date.prototype.getWeek = function() {
+Date.prototype.getWeek = function () {
     var date = new Date(this.getTime());
     date.setHours(0, 0, 0, 0);
     // Thursday in current week decides the year.
@@ -72,10 +72,10 @@ Date.prototype.getWeek = function() {
     var week1 = new Date(date.getFullYear(), 0, 4);
     // Adjust to Thursday in week 1 and count number of weeks from date to week1.
     return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
-                          - 3 + (week1.getDay() + 6) % 7) / 7);
+        - 3 + (week1.getDay() + 6) % 7) / 7);
 }
-  
-function renderMainMenu(){
+
+function renderMainMenu() {
     var xpos = 2;
     var str = e('b', '', xpos, 5, 32, 32, 29, 0, '', '<i class="fa fa-calendar-plus-o"></i>', 'c', 'setGUI(0)', '');
     xpos += 35;
@@ -166,8 +166,8 @@ app.get('/qw', function (req, res) {
 */
 
 app.get('/', function (req, res) {
-//    year = '2022';
-//    renderGUI(res, year, 0);
+    //    year = '2022';
+    //    renderGUI(res, year, 0);
     var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
     if (file.indexOf(dir + path.sep) !== 0) {
         return res.status(403).end('Forbidden');
@@ -185,15 +185,15 @@ app.get('/', function (req, res) {
 });
 
 
-app.get('/ttt', function(req, res){
-    var sql= "SELECT calendar FROM brugere WHERE name='Org';";
+app.get('/ttt', function (req, res) {
+    var sql = "SELECT calendar FROM brugere WHERE name='Org';";
     console.log(sql);
     pool.query(sql, (err, result) => {
-        if (!err){
+        if (!err) {
             console.log(result.rows[0].calendar);
             res.send(result.rows[0].calendar);
         }
-        else{
+        else {
             console.log(err);
             res.send("Error");
         }
@@ -217,107 +217,160 @@ app.get('*', function (req, res) {
     });
 });
 
-app.post('/ajaxtoggledays', function(req, res){
+app.post('/ajaxtoggledays', function (req, res) {
     var update = req.body;
     var str = "ARRAY[";
-    update.ids.forEach(e=>{
+    update.ids.forEach(e => {
         str += "'" + e + "',";
     })
-    str = str.substring(0, str.length-1) + "]";
-//    var sql = "SELECT id FROM kalender WHERE html_id IN ('day-2022-1-15-2-6', 'day-2022-1-16-2-7');";
-    var sql= "UPDATE brugere SET calendar=" + str +" WHERE id=" + update.userid +";"
+    str = str.substring(0, str.length - 1) + "]";
+    //    var sql = "SELECT id FROM kalender WHERE html_id IN ('day-2022-1-15-2-6', 'day-2022-1-16-2-7');";
+    var sql = "UPDATE brugere SET calendar=" + str + " WHERE id=" + update.userid + ";"
     //var sql = "SELECT id FROM kalender WHERE html_id IN " + str + ";";
     console.log(sql);
     pool.query(sql, (err, result) => {
-        if (!err){
+        if (!err) {
             console.log(result.rows);
             res.send(result.rows);
         }
-        else{
+        else {
             console.log(err);
             res.send("Error");
         }
     });
-/*
-      pool.query("UPDATE brugere SET calendar='" + update.ids + "' WHERE id="+update.userid+";", (err, result) => {
-        if (!err){
-            res.send(result.rows);
-        }
-        else{
-            res.send("Error");
-        }
-      });
-*/
+    /*
+          pool.query("UPDATE brugere SET calendar='" + update.ids + "' WHERE id="+update.userid+";", (err, result) => {
+            if (!err){
+                res.send(result.rows);
+            }
+            else{
+                res.send("Error");
+            }
+          });
+    */
 });
 
-app.post('/ajaxqueryplankalender', function(req, res){
-    var sql= "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";"
-    console.log(sql);
-    pool.query(sql, (err, result) => {
-        if (!err){
-            console.log(result);
-            res.send(result.rows[0].calendar);
-        }
-        else{
-            console.log(err);
-            res.send("Error");
-        }
-    });
+async function ajaxqueryplankalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": []
+    };
+    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
+    let plankalender;
+    try {
+        const { rows } = await pool.query(sql);
+        plankalender = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.planmap = plankalender[0].calendar;
+    
+    sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.kalender = kalenderen;
+ 
+//    console.log(kalenderen);
+    return res.send(svar);
+}
+
+app.post('/ajaxqueryplankalender', function (req, res) {
+    ajaxqueryplankalender_handler(req, res);
 });
 
-app.post('/ajaxquerybrugerkalender', function(req, res){
-    var sql= "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
-    console.log(sql);
-    pool.query(sql, (err, result) => {
-        if (!err){
-            console.log(result);
-            res.send(result.rows[0].calendar);
-        }
-        else{
-            console.log(err);
-            res.send("Error");
-        }
-    });
+
+async function ajaxquerybrugerkalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": []
+    };
+
+    sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.kalender = kalenderen;
+
+     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    let brugermap;
+    try {
+        const { rows } = await pool.query(sql);
+        brugermap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.brugermap = brugermap[0].calendar;
+ 
+//    console.log(kalenderen);
+    return res.send(svar);
+}
+
+
+app.post('/ajaxquerybrugerkalender', function (req, res) {
+    ajaxquerybrugerkalender_handler(req, res);
 });
 
-function updatePlanCalender(planid, map){
+function updatePlanCalender(planid, map) {
     var str = "ARRAY[ ";
-    map.forEach(e=>{
+    map.forEach(e => {
         str += "'" + e + "',";
     })
-    str = str.substring(0, str.length-1) + "]::text[]";
-    var sql= "UPDATE planer SET calendar=" + str + " WHERE id=" + planid +";"
+    str = str.substring(0, str.length - 1) + "]::text[]";
+    var sql = "UPDATE planer SET calendar=" + str + " WHERE id=" + planid + ";"
     pool.query(sql, (err, result) => {
-        if (err){
+        if (err) {
             console.log("FAIL - updatePlanCalender");
             console.log(sql);
         }
     });
 }
 
-app.post('/ajaxtoggleplandays', function(req, res){
-    var sql= "SELECT calendar FROM planer WHERE id=" + req.body.planid +";"
+app.post('/ajaxtoggleplandays', function (req, res) {
+    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";"
     console.log(sql);
     pool.query(sql, (err, result) => {
-        if (!err){
-            if (result.rowCount == 1){
-               /*  console.log("-----------------------");
-                console.log(result.rows[0].calendar);
-                console.log(req.body.command); */
+        if (!err) {
+            if (result.rowCount == 1) {
+                /*  console.log("-----------------------");
+                 console.log(result.rows[0].calendar);
+                 console.log(req.body.command); */
                 var map = req.body.ids;
                 /* console.log(map); */
-                if (req.body.command === 'set'){
-                    map.forEach(e=>{
-                        if (result.rows[0].calendar.indexOf(e) < 0){
+                if (req.body.command === 'set') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) < 0) {
                             result.rows[0].calendar.push(e);
                             /* console.log("pushing:" + e); */
                         }
                     });
                 }
-                else if (req.body.command === 'clear'){
-                    map.forEach(e=>{
-                        if (result.rows[0].calendar.indexOf(e) >= 0){
-                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e),1);
+                else if (req.body.command === 'clear') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) >= 0) {
+                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e), 1);
                             /* console.log("Slicing:" + e); */
                         }
                     });
@@ -326,51 +379,51 @@ app.post('/ajaxtoggleplandays', function(req, res){
                 res.send(result.rows[0].calendar);
             }
         }
-        else{
+        else {
             console.log(err);
             res.send("Error");
         }
     });
 });
 
-function updateBrugerCalender(userid, map){
+function updateBrugerCalender(userid, map) {
     var str = "ARRAY[ ";
-    map.forEach(e=>{
+    map.forEach(e => {
         str += "'" + e + "',";
     })
-    str = str.substring(0, str.length-1) + "]::text[]";
-    var sql= "UPDATE brugere SET calendar=" + str + " WHERE id=" + userid +";"
+    str = str.substring(0, str.length - 1) + "]::text[]";
+    var sql = "UPDATE brugere SET calendar=" + str + " WHERE id=" + userid + ";"
     pool.query(sql, (err, result) => {
-        if (err){
+        if (err) {
             console.log("FAIL - updateBrugerCalender");
             console.log(sql);
         }
     });
 }
 
-app.post('/ajaxtogglebrugerdays', function(req, res){
-    var sql= "SELECT calendar FROM brugere WHERE id=" + req.body.userid +";"
+app.post('/ajaxtogglebrugerdays', function (req, res) {
+    var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
     console.log(sql);
     pool.query(sql, (err, result) => {
-        if (!err){
-            if (result.rowCount == 1){
-               /*  console.log("-----------------------");
-                console.log(result.rows[0].calendar);
-                console.log(req.body.command); */
+        if (!err) {
+            if (result.rowCount == 1) {
+                /*  console.log("-----------------------");
+                 console.log(result.rows[0].calendar);
+                 console.log(req.body.command); */
                 var map = req.body.ids;
                 /* console.log(map); */
-                if (req.body.command === 'set'){
-                    map.forEach(e=>{
-                        if (result.rows[0].calendar.indexOf(e) < 0){
+                if (req.body.command === 'set') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) < 0) {
                             result.rows[0].calendar.push(e);
                             /* console.log("pushing:" + e); */
                         }
                     });
                 }
-                else if (req.body.command === 'clear'){
-                    map.forEach(e=>{
-                        if (result.rows[0].calendar.indexOf(e) >= 0){
-                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e),1);
+                else if (req.body.command === 'clear') {
+                    map.forEach(e => {
+                        if (result.rows[0].calendar.indexOf(e) >= 0) {
+                            result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e), 1);
                             /* console.log("Slicing:" + e); */
                         }
                     });
@@ -379,77 +432,116 @@ app.post('/ajaxtogglebrugerdays', function(req, res){
                 res.send(result.rows[0].calendar);
             }
         }
-        else{
+        else {
             console.log(err);
             res.send("Error");
         }
     });
 });
 
-app.post('/ajaxquerybrugere', function(req, res){
+app.post('/ajaxquerybrugere', function (req, res) {
     pool.query("SELECT id, name FROM brugere ORDER BY name", (err, result) => {
-        if (!err){
+        if (!err) {
             res.send(result.rows);
         }
-      });
+    });
 });
 
-app.post('/ajaxqueryplaner', function(req, res){
+app.post('/ajaxqueryplaner', function (req, res) {
     pool.query("SELECT id, name, type, final_date FROM planer ORDER BY final_date;", (err, result) => {
-        if (!err){
+        if (!err) {
             res.send(result.rows);
         }
-      });
+    });
 });
 
-app.post('/ajaxquerykalender', function(req, res){
+app.post('/ajaxquerykalender', function (req, res) {
     pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
-        if (!err){
+        if (!err) {
             res.send(result.rows);
         }
-        else{
+        else {
             res.send("Error");
         }
-      });
+    });
 });
 
-app.post('/ajaxquerymode3kalender', function(req, res){
+async function ajaxquerymode3kalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": []
+    };
     var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
-    pool.query(sql, (err, result) => {
-        if (!err){
-            if (result.rowCount === 1){
-                var datemap = [];
-                result.rows[0].calendar.forEach(r=>{
-                    var split = r.split('-');
-                    var key = split[1] + '-' + split[2];
-                    var ix = datemap.findIndex(e=> e.key === key);
-                    if (ix === -1){
-                        datemap.push({"key":key, "year":split[1], "month":split[2]});
-                    }
-                });
-                datemap.sort((x,y) => x.key.localeCompare(y.key));
-                console.log("datemap...");
-                console.log(datemap);
+    let plankalender;
+    try {
+        const { rows } = await pool.query(sql);
+        plankalender = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    plankalender[0].calendar.forEach(r => {
+        var split = r.split('-');
+        var key = split[1] + '-' + split[2];
+        var ix = svar.monthmap.findIndex(e => e.key === key);
+        if (ix === -1) {
+            svar.monthmap.push({ "key": key, "year": split[1], "month": split[2] });
         }
-//            res.send(result.rows);
-        }
-        else{
-            res.send("Error");
-        }
-      });
+        svar.planmap.push(r);
+    });
 
-    pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
-        if (!err){
+    var where = "";
+    svar.monthmap.forEach(d => {
+        where += "OR (year=" + d.year + " AND month=" + d.month + ") ";
+    });
+    where = where.substring(2).trim();
+    sql = "SELECT * FROM kalender WHERE " + where + " ORDER BY year,month,day,weeknumber,weekday;";
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.kalender = kalenderen;
+
+     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
+    let brugermap;
+    try {
+        const { rows } = await pool.query(sql);
+        brugermap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.brugermap = brugermap[0].calendar;
+ 
+//    console.log(kalenderen);
+    return res.send(svar);
+}
+
+app.post('/ajaxquerymode3kalender', function (req, res) {
+    ajaxquerymode3kalender_handler(req, res);
+
+/*     pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
+        if (!err) {
             res.send(result.rows);
         }
-        else{
+        else {
             res.send("Error");
         }
-      });
-});
+    });
+ */});
 
 app.listen(PORT, function () {
-    console.log(`Listening on ${ PORT }`);
+    console.log(`Listening on ${PORT}`);
 
 });
 

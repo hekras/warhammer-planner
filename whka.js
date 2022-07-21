@@ -7,6 +7,7 @@ const _graybg = "#e2e3e5";
 const _bluefg = "#004085";
 const _bluebg = "#cce5ff";
 
+var svar = null;
 
 function e_weeknumber(row, left, top, onclick){
     var html_id = 'weeknumber-' + row.year + '-0-0-' + row.weeknumber + '-0';
@@ -29,11 +30,11 @@ function e_weeknumber(row, left, top, onclick){
         str_ab;
 }
 
-function e(row, left, top, onclick){
+function e(row, left, top, onclick, dimmed){
     var str_aa = '<div style="' +
         'left: ' + left + 'px; ' +
         'top: ' + top + 'px;" ' +
-        'class="' + row.record_type + '" ' +
+        'class="' + row.record_type + dimmed + '" ' +
         'id="' + row.html_id.trim() + '" ' +
         'year="' + row.year + '" ' +
         'month="' + row.month + '" ' +
@@ -94,9 +95,9 @@ function ajaxqueryplaner() {
             rows.forEach(e => {
                 str += '<tr style="cursor: pointer;" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">';
                 str += '<td><a class="w3-button"><i class="fa fa-user-times"></i></a></td>';
-                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">' + e.name + '</div></td>';
-                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">' + e.type + '</div></td>';
-                str += '<td><div class="w3-button" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">' + e.final_date + '</div></td>';
+                str += '<td>' + e.name + '</td>';
+                str += '<td>' + e.type + '</td>';
+                str += '<td>' + e.final_date + '</td>';
                 str += '</tr>';
             });
             str += '</table>';
@@ -160,9 +161,11 @@ function updateMode(userid, planid){
             ajaxquerybrugerkalender();
             break;
         case 2:
+            ajaxquerykalender();
             ajaxqueryplankalender();
             break;
         case 3:
+            console.log("ajaxquerymode3kalender-request")
             ajaxquerymode3kalender();
             break;
         };
@@ -178,10 +181,55 @@ function ajaxquerybrugerkalender() {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            var map = JSON.parse(this.responseText);
+//            document.getElementById("valid-kalender-selector").innerText = this.responseText;
+            svar = JSON.parse(this.responseText);
+            var rows = svar.kalender;
+            var html = "";
+            var ypos = 85;
+            var weekchange = 1;
+            var monthoffset = 0;
+            rows.forEach( r=> {
+                if (r.day === 1){
+                    ypos = 34;
+                    weekchange = 1;
+                }
+                if (weekchange){
+                    var xoff = 285 * ((monthoffset - 1) % 4);
+                    var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                    if (r.weeknumber != 0){
+                        html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
+                    }
+                    weekchange = 0;
+                }
+                switch(r.record_type){
+                    case 'month':
+                        monthoffset++;
+                        var xoff = 285 * ((monthoffset - 1) % 4);
+                        var yoff = 10 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff, 'togglemonth(this)','');
+                        break;
+                    case 'weekday':
+                        var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
+                        break;
+                    case 'day':
+                        var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff + ypos, 'toggleday(this)', '');
+                        if (r.weekday === 7){
+                            ypos += 33;
+                            weekchange = 1;  
+                        }
+                        break;
+                }
+            });
+            document.getElementById("valid-kalender-selector").innerHTML = html;
+
+//            console.log(JSON.stringify(svar.brugermap));
             var alldays = document.querySelectorAll('[class="day"]');
             alldays.forEach(element => {
-                element.style.background = (map.indexOf(element.id)===-1) ? '': _greenbg;
+                element.style.background = (svar.brugermap.indexOf(element.id)===-1) ? '': _greenbg;
             });
         }
     };
@@ -201,10 +249,55 @@ function ajaxqueryplankalender() {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            var map = JSON.parse(this.responseText);
+//            document.getElementById("valid-kalender-selector").innerText = this.responseText;
+            svar = JSON.parse(this.responseText);
+            var rows = svar.kalender;
+            var html = "";
+            var ypos = 85;
+            var weekchange = 1;
+            var monthoffset = 0;
+            rows.forEach( r=> {
+                if (r.day === 1){
+                    ypos = 34;
+                    weekchange = 1;
+                }
+                if (weekchange){
+                    var xoff = 285 * ((monthoffset - 1) % 4);
+                    var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                    if (r.weeknumber != 0){
+                        html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
+                    }
+                    weekchange = 0;
+                }
+                switch(r.record_type){
+                    case 'month':
+                        monthoffset++;
+                        var xoff = 285 * ((monthoffset - 1) % 4);
+                        var yoff = 10 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff, 'togglemonth(this)','');
+                        break;
+                    case 'weekday':
+                        var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
+                        break;
+                    case 'day':
+                        var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff + ypos, 'toggleday(this)', '');
+                        if (r.weekday === 7){
+                            ypos += 33;
+                            weekchange = 1;  
+                        }
+                        break;
+                }
+            });
+            document.getElementById("valid-kalender-selector").innerHTML = html;
+
+//            console.log(JSON.stringify(svar.brugermap));
             var alldays = document.querySelectorAll('[class="day"]');
             alldays.forEach(element => {
-                element.style.background = (map.indexOf(element.id)===-1) ? '': _greenbg;
+                element.style.background = (svar.planmap.indexOf(element.id)===-1) ? '': _greenbg;
             });
         }
     };
@@ -224,18 +317,21 @@ function ajaxquerymode3kalender() {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            var rows = JSON.parse(this.responseText);
+//            document.getElementById("valid-kalender-selector").innerText = this.responseText;
+            svar = JSON.parse(this.responseText);
+            var rows = svar.kalender;
             var html = "";
             var ypos = 85;
             var weekchange = 1;
+            var monthoffset = 0;
             rows.forEach( r=> {
                 if (r.day === 1){
                     ypos = 34;
                     weekchange = 1;
                 }
                 if (weekchange){
-                    var xoff = 285 * ((r.month - 1) % 4);
-                    var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
+                    var xoff = 285 * ((monthoffset - 1) % 4);
+                    var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
                     if (r.weeknumber != 0){
                         html += e_weeknumber(r,xoff, yoff+ypos, 'toggleweek(this)');
                     }
@@ -243,19 +339,22 @@ function ajaxquerymode3kalender() {
                 }
                 switch(r.record_type){
                     case 'month':
-                        var xoff = 285 * ((r.month - 1) % 4);
-                        var yoff = 10 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff, 'togglemonth(this)');
+                        monthoffset++;
+                        var xoff = 285 * ((monthoffset - 1) % 4);
+                        var yoff = 10 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff, 'togglemonth(this)','');
                         break;
                     case 'weekday':
-                        var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
-                        var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff, 'toggledayofweek(this)');
+                        var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
                         break;
                     case 'day':
-                        var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
-                        var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff + ypos, 'toggleday(this)');
+                        var xoff = 285 * ((monthoffset - 1) % 4) + 2 + 33 * r.weekday;
+                        var yoff = 50 + 270 * Math.floor((monthoffset - 1) / 4);
+                        var dimmed = (svar.planmap.indexOf(r.html_id) === -1) ? '-dimmed' : '';
+                        var toggle = (svar.planmap.indexOf(r.html_id) === -1) ? '' : 'toggleday(this)';
+                        html += e(r, xoff, yoff + ypos, toggle, dimmed);
                         if (r.weekday === 7){
                             ypos += 33;
                             weekchange = 1;  
@@ -264,6 +363,12 @@ function ajaxquerymode3kalender() {
                 }
             });
             document.getElementById("valid-kalender-selector").innerHTML = html;
+
+//            console.log(JSON.stringify(svar.brugermap));
+            var alldays = document.querySelectorAll('[class="day"]');
+            alldays.forEach(element => {
+                element.style.background = (svar.brugermap.indexOf(element.id)===-1) ? '': _greenbg;
+            });
         }
     };
     
@@ -297,17 +402,17 @@ function ajaxquerykalender() {
                     case 'month':
                         var xoff = 285 * ((r.month - 1) % 4);
                         var yoff = 10 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff, 'togglemonth(this)');
+                        html += e(r, xoff, yoff, 'togglemonth(this)','');
                         break;
                     case 'weekday':
                         var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
                         var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff, 'toggledayofweek(this)');
+                        html += e(r, xoff, yoff, 'toggledayofweek(this)','');
                         break;
                     case 'day':
                         var xoff = 285 * ((r.month - 1) % 4) + 2 + 33 * r.weekday;
                         var yoff = 50 + 270 * Math.floor((r.month - 1) / 4);
-                        html += e(r, xoff, yoff + ypos, 'toggleday(this)');
+                        html += e(r, xoff, yoff + ypos, 'toggleday(this)','');
                         if (r.weekday === 7){
                             ypos += 33;
                             weekchange = 1;  
@@ -400,7 +505,7 @@ function ajaxtoggledays(count, ids) {
         }
     };
     
-    var mode2url=[null, "/ajaxtogglebrugerdays","/ajaxtoggleplandays",null];
+    var mode2url=[null, "/ajaxtogglebrugerdays","/ajaxtoggleplandays","/ajaxtogglebrugerdays"];
 
     if (mode2url[update.modeid] != null){
         xhttp.open("POST", mode2url[update.modeid], true);
