@@ -505,7 +505,7 @@ async function ajaxquerymode3kalender_handler(req, res) {
     }
     svar.brugermap = brugermap[0].calendar;
 
-    var sql = "SELECT id, calendar FROM brugere WHERE id IN (19,21,22,23,24,25,26,27);"
+    var sql = "SELECT id, calendar FROM brugere WHERE id IN (1,2,3,4,5,6,7,8);"
     try {
         const { rows } = await pool.query(sql);
         svar.heatmap = rows;
