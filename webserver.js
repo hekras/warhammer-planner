@@ -221,7 +221,7 @@ app.post('/ajaxtoggledays', function (req, res) {
     console.log(sql);
     pool.query(sql, (err, result) => {
         if (!err) {
-            console.log(result.rows);
+            //console.log(result.rows);
             res.send(result.rows);
         }
         else {
@@ -344,16 +344,11 @@ app.post('/ajaxtoggleplandays', function (req, res) {
     pool.query(sql, (err, result) => {
         if (!err) {
             if (result.rowCount == 1) {
-                /*  console.log("-----------------------");
-                 console.log(result.rows[0].calendar);
-                 console.log(req.body.command); */
                 var map = req.body.ids;
-                /* console.log(map); */
                 if (req.body.command === 'set') {
                     map.forEach(e => {
                         if (result.rows[0].calendar.indexOf(e) < 0) {
                             result.rows[0].calendar.push(e);
-                            /* console.log("pushing:" + e); */
                         }
                     });
                 }
@@ -361,7 +356,6 @@ app.post('/ajaxtoggleplandays', function (req, res) {
                     map.forEach(e => {
                         if (result.rows[0].calendar.indexOf(e) >= 0) {
                             result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e), 1);
-                            /* console.log("Slicing:" + e); */
                         }
                     });
                 }
@@ -392,22 +386,16 @@ function updateBrugerCalender(userid, map) {
 }
 
 app.post('/ajaxtogglebrugerdays', function (req, res) {
-//    console.log(req.body);
     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
     console.log(sql);
     pool.query(sql, (err, result) => {
         if (!err) {
             if (result.rowCount == 1) {
-                /*  console.log("-----------------------");
-                 console.log(result.rows[0].calendar);
-                 console.log(req.body.command); */
                 var map = req.body.ids;
-                /* console.log(map); */
                 if (req.body.command === 'set') {
                     map.forEach(e => {
                         if (result.rows[0].calendar.indexOf(e) < 0) {
                             result.rows[0].calendar.push(e);
-                            /* console.log("pushing:" + e); */
                         }
                     });
                 }
@@ -415,7 +403,6 @@ app.post('/ajaxtogglebrugerdays', function (req, res) {
                     map.forEach(e => {
                         if (result.rows[0].calendar.indexOf(e) >= 0) {
                             result.rows[0].calendar.splice(result.rows[0].calendar.indexOf(e), 1);
-                            /* console.log("Slicing:" + e); */
                         }
                     });
                 }
@@ -491,7 +478,6 @@ async function ajaxquerymode3kalender_handler(req, res) {
         svar.kalender = [];
         console.log('ERROR :' + sql);
     }
-    console.log(svar.kalender);
 
     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
     let brugermap;
@@ -505,7 +491,7 @@ async function ajaxquerymode3kalender_handler(req, res) {
     }
     svar.brugermap = brugermap[0].calendar;
 
-    var sql = "SELECT id, calendar FROM brugere WHERE id IN (1,2,3,4,5,6,7,8);"
+    var sql = "SELECT id, calendar FROM brugere;"
     try {
         const { rows } = await pool.query(sql);
         svar.heatmap = rows;
