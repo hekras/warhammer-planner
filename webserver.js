@@ -4,20 +4,21 @@ const express = require('express');
 var fs = require('fs');
 
 
-/* const pool = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
     }
 });
- */
+
+/*
 const pool = new Pool({
     user: 'sqlmaster',
     host: 'localhost',
     database: 'warhammer_planner',
     password: '-Zx12131415',
     port: 5432,
-});
+});*/
 
 const PORT = process.env.PORT || 8080
 var app = express();
