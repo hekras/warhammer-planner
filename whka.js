@@ -50,26 +50,51 @@ function e(row, left, top, onclick, dimmed){
         str_ab;
 }
 
+function ee_weeknumber(r, eid, onclickevent){
+    var e = document.getElementById(eid);
+    e.setAttribute('id', r.html_id);
+    e.style.visibility = 'visible';
+//    e.setAttribute('record_type', r.record_type);
+    e.setAttribute('year', r.year);
+    e.setAttribute('month', r.month);
+    e.setAttribute('day', r.day);
+    e.setAttribute('week', r.weeknumber);
+    e.setAttribute('dayofweek', r.weekday);
+    e.setAttribute('onclick', onclickevent);
+    e.innerText = r.weeknumber;
+}
+
+function ee(r, eid, onclickevent){
+    var e = document.getElementById(eid);
+    e.setAttribute('id', r.html_id);
+    e.style.visibility = 'visible';
+    e.setAttribute('record_type', r.record_type);
+    e.setAttribute('year', r.year);
+    e.setAttribute('month', r.month);
+    e.setAttribute('day', r.day);
+    e.setAttribute('week', r.weeknumber);
+    e.setAttribute('dayofweek', r.weekday);
+    e.setAttribute('onclick', onclickevent);
+    e.innerText = r.str;
+}
+
 function ajaxquerybrugere() {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             var str = '<table class="w3-table-all">' +
             '<tr class="w3-light-green">' +
-            '<th>Action</th>' +
             '<th>Name</th>' +
             '</tr>';
+            str += '<tr style="cursor: pointer;" onclick="selectUser(-1, ' + "'---'" + ')">';
+            str += '<td>---</td>';
+            str += '</tr>';
             var rows = JSON.parse(this.responseText);
             rows.forEach(e => {
                 str += '<tr style="cursor: pointer;" onclick="selectUser(' + e.id + ', ' + "'" + e.name + "'" + ')">';
-                str += '<td><a class="w3-button"><i class="fa fa-user-times"></i></a></td>';
                 str += '<td>' + e.name + '</td>';
                 str += '</tr>';
             });
-            str += '<tr>'
-            str += '<td><a class="w3-button"><i class="fa fa-user-plus"></i></a></td>';
-            str += '<td></td>';
-            str += '</tr>'
             str += '</table>';
             document.getElementById("bruger-listen").innerHTML = str;
         }
@@ -86,15 +111,18 @@ function ajaxqueryplaner() {
         if (this.readyState == 4 && this.status == 200) {
             var str = '<table class="w3-table-all">' +
             '<tr class="w3-light-green">' +
-            '<th>Action</th>' +
             '<th>Name</th>' +
             '<th>type</th>' +
             '<th>final date</th>' +
             '</tr>';
+            str += '<tr style="cursor: pointer;" onclick="selectPlan(-1, ' + "'---'" + ')">';
+            str += '<td>---</td>';
+            str += '<td></td>';
+            str += '<td></td>';
+            str += '</tr>';
             var rows = JSON.parse(this.responseText);
             rows.forEach(e => {
                 str += '<tr style="cursor: pointer;" onclick="selectPlan(' + e.id + ', ' + "'" + e.name + "')" + '">';
-                str += '<td><a class="w3-button"><i class="fa fa-user-times"></i></a></td>';
                 str += '<td>' + e.name + '</td>';
                 str += '<td>' + e.type + '</td>';
                 str += '<td>' + e.final_date + '</td>';
@@ -157,14 +185,24 @@ function updateMode(userid, planid){
     document.getElementById('selected-mode').innerText = modestr[mode];
     document.getElementById("valid-kalender-selector").style.display = (mode === 0) ? 'none' : 'block';
     switch(mode){
+        case 0:
+            document.getElementById("valid-kalender").style.display = 'none';
+            break;
         case 1:
-            ajaxquerybrugerkalender();
+            document.getElementById("valid-kalender").style.display = 'none';
+            ajaxquerybrugerresponsivekalender();
+            //ajaxquerybrugerkalender();
+            document.getElementById("valid-kalender").style.display = 'block';
             break;
         case 2:
+            document.getElementById("valid-kalender").style.display = 'none';
             ajaxqueryplankalender();
+            document.getElementById("valid-kalender").style.display = 'block';
             break;
         case 3:
+            document.getElementById("valid-kalender").style.display = 'none';
             ajaxquerymode3kalender();
+            document.getElementById("valid-kalender").style.display = 'block';
             break;
         };
 }
@@ -377,7 +415,6 @@ function ajaxquerymode3kalender() {
                     if (r.calendar.indexOf(element.id) > -1) {count++;}
                 });
                 if (count > 0){
-                    console.log(element.id + ":" + count);
                     element.innerHTML += '<div class="heat" style="left: ' + (element.style.left+2) +'px; top: ' + element.style.top +'px; ">' + count + '</div>';
                 }
             });
@@ -628,9 +665,142 @@ function ajaxaddnewplan(){
     document.getElementById("addplandialog").style.display = 'none';
 }
 
+function responsivekalenderbasic(){
+    const km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+    const kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
+    const wi = 100/8;
+
+    var html = '<div class="w3-row">';
+    var mm = [1,2,3,4,5,6,7,8,9,10,11,12];
+    mm.forEach(m=>{
+        html += '<div class="w3-col w3-container l3 m6 w3-border"">';
+
+        html += '<div class="w3-row">';
+        html += '<div class="w3-col" style="width:100%; height: 32px; text-align: center; font-size: 20px;">' + km[m-1] +'</div>';
+        // render weekdays names
+        html += '<div class="w3-col" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px;"></div>';
+        kd.forEach(wd=>{
+            html += '<div class="w3-col w3-border" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px; cursor: pointer; padding: 6px;">' + wd + '</div>';
+        });
+
+        var day=1;
+        for(var w=0;w<6;w++){
+            html += '<div class="w3-col w3-border" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px; cursor: pointer; padding: 6px;">' + w + '</div>';
+            for(var d=0;d<7;d++){
+                html += '<div class="w3-col w3-border" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px; cursor: pointer; padding: 6px;">' + (day++) + '</div>';
+            }
+        }
+
+        html += '</div>';
+        
+        html += '</div>';
+
+    });
+
+    html += '</div>'
+    document.getElementById('responsivekalender').innerHTML = html;
+}
+
+function responsivekalender(){
+    const km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+    const kd = [1,2,3,4,5,6,7];
+    const wi = 100/8;
+
+    var html = '<div class="w3-row">';
+    var mm = [1,2,3,4,5,6,7,8,9,10,11,12];
+    mm.forEach(m=>{
+        html += '<div class="w3-col w3-container l3 m6 w3-border"">';
+
+        html += '<div class="w3-row">';
+        html += '<div id="month-' + m + '" class="w3-col" style="width:100%; height: 32px; text-align: center; font-size: 20px; visibility: hidden;">---</div>';
+        // render weekdays names
+        html += '<div class="w3-col" style="width:' + wi + '%; height: 32px; visibility: hidden;"></div>';
+        kd.forEach(wd=>{
+            html += '<div id="weekday-' + m + '-' + wd + '" class="w3-col w3-border" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; padding: 6px;">-' + wd + '-</div>';
+        });
+
+        for(var w=0;w<6;w++){
+            html += '<div id="weeknumber-' + m + '-' + w + '" class="w3-col w3-border" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px; font-weight: bold; cursor: pointer; padding: 6px; visibility: hidden;">-</div>';
+            for(var d=1;d<8;d++){
+                html += '<div id="day-' + m + '-' + w +  '-' + d + '"class="w3-col w3-border" style="width:' + wi + '%; height: 32px; text-align: center; font-size: 12px; cursor: pointer; padding: 6px; visibility: hidden;"></div>';
+            }
+        }
+
+        html += '</div>';
+        
+        html += '</div>';
+
+    });
+
+    html += '</div>'
+    document.getElementById('responsivekalender').innerHTML = html;
+}
+
+function ajaxquerybrugerresponsivekalender() {
+    var update = {
+        "userid": document.getElementById('selected-user-id').innerText,
+        "planid": document.getElementById('selected-plan-id').innerText,
+        "modeid": document.getElementById('selected-mode-id').innerText
+    };
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+//            document.getElementById("valid-kalender-selector").innerText = this.responseText;
+            svar = JSON.parse(this.responseText);
+            var rows = svar.kalender;
+            var weekchange = 1;
+            var monthoffset = 0;
+            var weekoffset = 0;
+            rows.forEach( r=> {
+                if (r.day === 1){
+                    ypos = 34;
+                    weekchange = 1;
+                }
+                if (weekchange){
+                    if ((r.weeknumber != 0)&&(monthoffset != 0)){
+                        ee_weeknumber(r, 'weeknumber-' + monthoffset + '-' + weekoffset, 'toggleweek(this)');
+                        weekoffset++;
+                    }
+                    weekchange = 0;
+                }
+                switch(r.record_type){
+                    case 'month':
+                        monthoffset++;
+                        weekoffset = 0;
+                        ee(r, 'month-' + monthoffset, 'togglemonth(this)');
+                        break;
+                    case 'weekday':
+                        ee(r, 'weekday-' + monthoffset + '-' + r.weekday, 'toggledayofweek(this)' );
+                        break;
+                    case 'day':
+                        ee(r, 'day-' + monthoffset + '-' + (weekoffset-1) +  '-' + r.weekday, 'toggleday(this)' );
+                        if (r.weekday === 7){
+                            weekchange = 1;  
+                        }
+                        break;
+                }
+            });
+//            document.getElementById("valid-kalender-selector").innerHTML = html;
+
+//            console.log(JSON.stringify(svar.brugermap));
+            var alldays = document.querySelectorAll('[record_type="day"]');
+            alldays.forEach(element => {
+                element.style.background = (svar.brugermap.indexOf(element.id)===-1) ? '': _greenbg;
+            });
+        }
+    };
+    
+    xhttp.open("POST", "/ajaxquerybrugerkalender", true);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send(JSON.stringify(update));
+}
+
 /***********************************
 // main - program starts here !!!!!!
 ************************************/
 ajaxquerybrugere();
 ajaxqueryplaner();
 updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
+responsivekalender();
+//ajaxquerybrugerresponsivekalender();
