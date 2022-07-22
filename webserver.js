@@ -4,21 +4,21 @@ const express = require('express');
 var fs = require('fs');
 
 
-const pool = new Pool({
+/* const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
     }
-});
+}); */
 
-/*
+
 const pool = new Pool({
     user: 'sqlmaster',
     host: 'localhost',
     database: 'warhammer_planner',
     password: '-Zx12131415',
     port: 5432,
-});*/
+});
 
 const PORT = process.env.PORT || 8080
 var app = express();
@@ -510,16 +510,7 @@ async function ajaxquerymode3kalender_handler(req, res) {
 
 app.post('/ajaxquerymode3kalender', function (req, res) {
     ajaxquerymode3kalender_handler(req, res);
-
-/*     pool.query("SELECT * FROM kalender WHERE year=2022 ORDER BY year, month, day;", (err, result) => {
-        if (!err) {
-            res.send(result.rows);
-        }
-        else {
-            res.send("Error");
-        }
-    });
- */});
+});
 
 app.post('/ajaxaddnewplan', function (req, res) {
 

@@ -24,6 +24,24 @@ function ee_weeknumber(r, eid, onclickevent){
     e.innerText = r.weeknumber;
 }
 
+function ee_dimmed(r, eid, onclickevent){
+    var e = document.getElementById(eid);
+    e.setAttribute('id', r.html_id);
+    e.style.visibility = 'visible';
+    e.setAttribute('record_type', 'dimmed');
+    e.style.color = 'lightgray';
+    e.style.cursor = 'default';
+/*     if (r.record_type == 'day') {
+        e.setAttribute('toggle','clear');
+    }
+    e.setAttribute('year', r.year);
+    e.setAttribute('month', r.month);
+    e.setAttribute('day', r.day);
+    e.setAttribute('week', r.weeknumber);
+    e.setAttribute('dayofweek', r.weekday); */
+    e.innerText = r.str;
+}
+
 function ee(r, eid, onclickevent){
     var e = document.getElementById(eid);
     e.setAttribute('id', r.html_id);
@@ -370,11 +388,11 @@ function ajaxquerymode3responsivekalender() {
                         ee(r, 'weekday-' + monthoffset + '-' + r.weekday, 'toggledayofweek(this)' );
                         break;
                     case 'day':
-                        ee(r, 'day-' + monthoffset + '-' + (weekoffset-1) +  '-' + r.weekday, 'toggleday(this)' );
                         if (svar.planmap.indexOf(r.html_id) === -1){
-                            document.getElementById(r.html_id).setAttribute('record_type', 'dimmed');
-                            document.getElementById(r.html_id).setAttribute('onclick', '');
-                            document.getElementById(r.html_id).style.color = 'lightgray';
+                            ee_dimmed(r, 'day-' + monthoffset + '-' + (weekoffset-1) +  '-' + r.weekday, 'toggleday(this)' );
+                        }
+                        else {
+                            ee(r, 'day-' + monthoffset + '-' + (weekoffset-1) +  '-' + r.weekday, 'toggleday(this)' );
                         }
                         if (r.weekday === 7){
                             weekchange = 1;  
