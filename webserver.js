@@ -224,6 +224,7 @@ async function ajaxqueryplankalender_handler(req, res) {
         "planmap" : [],
         "kalender": [],
         "brugermap": [],
+        "heatmap": [],
         "dateid": ''
     };
     var sql = "SELECT dateid, calendar FROM planer WHERE id=" + req.body.planid + ";";
@@ -238,7 +239,6 @@ async function ajaxqueryplankalender_handler(req, res) {
     }
     svar.planmap = plankalender[0].calendar;
     svar.dateid = plankalender[0].dateid;
-    console.log("svar:" + svar.dateid);
     
     sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
     let kalenderen;
@@ -251,6 +251,16 @@ async function ajaxqueryplankalender_handler(req, res) {
         return res.status(500).send();
     }
     svar.kalender = kalenderen;
+ 
+    var sql = "SELECT id, calendar FROM brugere;"
+    try {
+        const { rows } = await pool.query(sql);
+        svar.heatmap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
  
 //    console.log(kalenderen);
     return res.send(svar);
@@ -267,7 +277,8 @@ async function ajaxquerybrugerkalender_handler(req, res) {
         "monthmap": [],
         "planmap" : [],
         "kalender": [],
-        "brugermap": []
+        "brugermap": [],
+        "heatmap": []
     };
 
     sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
@@ -293,6 +304,16 @@ async function ajaxquerybrugerkalender_handler(req, res) {
         return res.status(500).send();
     }
     svar.brugermap = brugermap[0].calendar;
+ 
+    var sql = "SELECT id, calendar FROM brugere;"
+    try {
+        const { rows } = await pool.query(sql);
+        svar.heatmap = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
  
 //    console.log(kalenderen);
     return res.send(svar);
@@ -482,7 +503,7 @@ async function ajaxquerymode3kalender_handler(req, res) {
         }
         svar.planmap.push(r);
     });
-    svar.dateid = kalender[0].dateid;
+    svar.dateid = plankalender[0].dateid;
 
     var where = "";
     svar.monthmap.forEach(d => {

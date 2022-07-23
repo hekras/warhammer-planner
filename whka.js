@@ -9,6 +9,7 @@ const _bluebg = "#cce5ff";
 
 var svar = null;
 var setpinmode = false;
+var setheatmode = false;
 
 function ee_weeknumber(r, eid, onclickevent){
     var html_id = 'weeknumber-' + r.year + '-0-0-' + r.weeknumber + '-0';
@@ -150,6 +151,12 @@ function displayPlanSelector(){
     }
 }
 
+function displayheatmap(newmode){
+    setheatmode = (!setheatmode) & newmode;;
+    document.getElementById('heatmapbutton').style.background = (setheatmode) ? 'red' : '';
+    updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
+}
+
 function selectUser(id, name){
     document.getElementById('selected-user').innerText = name;
     document.getElementById('selected-user-id').innerText = id;
@@ -170,7 +177,7 @@ function setPlanPin(newmode){
 }
 
 function updateMode(userid, planid){
-    var modestr = ["", ": Juster din egen kalender", ": Vælg gyldige dage for planen", ": Din kalender i perioden for planen"];
+    var modestr = ["", ": Juster din egen kalender", ": Vælg gyldige dage for planen", ": Din kalender i perioden for planen", ": Heatmap"];
     var mode = ((userid >= 0) ? 1 : 0) + ((planid >= 0) ? 2 : 0);
     document.getElementById('selected-mode-id').innerText = mode;
     document.getElementById('selected-mode').innerText = modestr[mode];
@@ -458,6 +465,8 @@ function ajaxquerymode3responsivekalender() {
                 document.getElementById(svar.dateid).innerHTML = '<i class="fa fa-thumb-tack"></i>';
             }
 
+            updateheatmap(svar.heatmap);
+
         }
     };
     
@@ -522,6 +531,8 @@ function ajaxqueryresponsiveplankalender() {
             if (svar.dateid !== ''){
                 document.getElementById(svar.dateid).innerHTML = '<i class="fa fa-thumb-tack fa-2x"></i>';
             }
+            updateheatmap(svar.heatmap);
+
         }
     };
     
@@ -581,12 +592,30 @@ function ajaxquerybrugerresponsivekalender() {
                 element.setAttribute('toggle', toggle);
                 element.style.background = (svar.brugermap.indexOf(element.id)===-1) ? '': _greenbg;
             });
+
+            updateheatmap(svar.heatmap);
         }
     };
     
     xhttp.open("POST", "/ajaxquerybrugerkalender", true);
     xhttp.setRequestHeader("Content-Type", "application/json");
     xhttp.send(JSON.stringify(update));
+}
+
+function updateheatmap(heatmap){
+    if ((heatmap != null)&&(setheatmode)){
+        var colormap = ['','#005582','#0086ad','#00c2c7','#97ebdb','#daf8e3','#fff33b','#fdc70c','#f3903f','#ed683c','#e93e3a'];
+        
+        var alldays = document.querySelectorAll('[record_type="day"]');
+        alldays.forEach(el=>{
+            var heat=0;
+            heatmap.forEach(bruger=>{
+                heat = (bruger.calendar.indexOf(el.id) !== -1) ? heat+1: heat;
+            });
+            if (heat>10) {hear=10;}
+            el.style.background = colormap[heat];
+        });
+    }
 }
 
 /***********************************
