@@ -179,21 +179,6 @@ app.get('/', function (req, res) {
     });
 });
 
-app.get('/ttt', function (req, res) {
-    var sql = "SELECT calendar FROM brugere WHERE name='Org';";
-    console.log(sql);
-    pool.query(sql, (err, result) => {
-        if (!err) {
-            console.log(result.rows[0].calendar);
-            res.send(result.rows[0].calendar);
-        }
-        else {
-            console.log(err);
-            res.send("Error");
-        }
-    });
-});
-
 app.get('*', function (req, res) {
     var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
     if (file.indexOf(dir + path.sep) !== 0) {

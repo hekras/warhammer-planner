@@ -67,7 +67,7 @@ function ajaxquerybrugere() {
             '<tr class="w3-light-green">' +
             '<th>Name</th>' +
             '</tr>';
-            str += '<tr style="cursor: pointer;" onclick="selectUser(-1, ' + "'---'" + ')">';
+            str += '<tr style="cursor: pointer;" onclick="selectUser(-1, ' + "''" + ')">';
             str += '<td>---</td>';
             str += '</tr>';
             var rows = JSON.parse(this.responseText);
@@ -96,7 +96,7 @@ function ajaxqueryplaner() {
             '<th>type</th>' +
             '<th>final date</th>' +
             '</tr>';
-            str += '<tr style="cursor: pointer;" onclick="selectPlan(-1, ' + "'---'" + ')">';
+            str += '<tr style="cursor: pointer;" onclick="selectPlan(-1, ' + "''" + ')">';
             str += '<td>---</td>';
             str += '<td></td>';
             str += '<td></td>';
@@ -122,7 +122,7 @@ function ajaxqueryplaner() {
 function displayUserSelector(){
     
     if (document.getElementById('brugere').style.display !=='none'){
-        document.getElementById('selected-user').innerText = '---';
+        document.getElementById('selected-user').innerText = '';
         document.getElementById('selected-user-id').innerText = '-1';
         document.getElementById('brugere').style.display = 'none';
         updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
@@ -135,7 +135,7 @@ function displayUserSelector(){
 function displayPlanSelector(){
     
     if (document.getElementById('planer').style.display !=='none'){
-        document.getElementById('selected-plan').innerText = '---';
+        document.getElementById('selected-plan').innerText = '';
         document.getElementById('selected-plan-id').innerText = '-1';
         document.getElementById('planer').style.display = 'none';
         updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
@@ -160,7 +160,7 @@ function selectPlan(id, name){
 }
 
 function updateMode(userid, planid){
-    var modestr = ["---", "Juster din egen kalender", "Vælg gyldige dage for planen", "Din kalender i perioden for planen"];
+    var modestr = ["", "Juster din egen kalender", "Vælg gyldige dage for planen", "Din kalender i perioden for planen"];
     var mode = ((userid >= 0) ? 1 : 0) + ((planid >= 0) ? 2 : 0);
     document.getElementById('selected-mode-id').innerText = mode;
     document.getElementById('selected-mode').innerText = modestr[mode];
@@ -546,5 +546,5 @@ function ajaxquerybrugerresponsivekalender() {
 ajaxquerybrugere();
 ajaxqueryplaner();
 updateMode(document.getElementById('selected-user-id').innerText, document.getElementById('selected-plan-id').innerText);
-responsivekalender();
+//responsivekalender();
 //ajaxquerybrugerresponsivekalender();
