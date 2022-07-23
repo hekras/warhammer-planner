@@ -4,21 +4,21 @@ const express = require('express');
 var fs = require('fs');
 
 
-/* const pool = new Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
     }
-}); */
+});
 
 
-const pool = new Pool({
+/* const pool = new Pool({
     user: 'sqlmaster',
     host: 'localhost',
     database: 'warhammer_planner',
     password: '-Zx12131415',
     port: 5432,
-});
+}); */
 
 const PORT = process.env.PORT || 8080
 var app = express();
@@ -36,7 +36,6 @@ var mime = {
     js: 'application/javascript'
 };
 
-
 /** add plans to DB /
 var planer = [
     {name:"Warhammer, august", type:"event-planner", uuid:"1", valid_dates:[], final_date:"n/a"},
@@ -52,25 +51,16 @@ planer.forEach(e =>{
 })
 /**/
 
-/** ADD names to DB */
+/** ADD names to DB /
 function initbrugeretable(){
-var names = [
-    {"name":"GM", "role":"", "id":"287aacbc-7891-4ea4-847e-5d725321dc19"},
-    {"name":"Finn", "role":"", "id":"9c136d93-406d-4d12-98bb-b350564476c0"}, 
-    {"name":"Undick", "role":"", "id":"42e831ac-ccf7-46f0-a137-2a8265557007"}, 
-    {"name":"Ursula", "role":"", "id":"7b12767e-877b-447b-8873-8359db50878b"}, 
-    {"name":"Marath", "role":"", "id":"6fd05639-3d88-4ca0-9491-832044d57b40"}, 
-    {"name":"Halfdan", "role":"", "id":"38452066-307e-4da8-bcd0-2d0854475aa7"}, 
-    {"name":"Adric", "role":"", "id":"3a8697e9-5dd2-476f-a0c9-acc1e61a6d39"}, 
-    {"name":"Odrick", "role":"", "id":"5212219a-57ae-4531-a38c-fd2e42da9d91"}, 
-];
+var names = ["GM", "Finn", "Undick", "Ursula", "Marath", "Halfdan", "Adric", "Odrick"];
 
-names.forEach(e =>{
-    pool.query("INSERT INTO brugere (name, calendar) VALUES ('" + e.name + "', '{}')", (err, res) => {
+names.forEach(name =>{
+    pool.query("INSERT INTO brugere (name, calendar) VALUES ('" + name + "', '{}');", (err, res) => {
         console.log(err, res)
       })
 })
-/**/
+
 }
 // Returns the ISO week of the date.
 Date.prototype.getWeek = function () {
@@ -98,7 +88,7 @@ function genId(year,month,weekday,weeknumber,day,event_index){
 */
 
 
-/** ADD calender records to DB */
+/** ADD calender records to DB /
 const dag = new Date();
 const km = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
 const kd = ["ma", "ti", "on", "to", "fr", "lø", "sø"];
@@ -158,7 +148,7 @@ app.get('/qw', function (req, res) {
     initbrugeretable();
     res.send(str);
 });
-
+/**/
 
 app.get('/', function (req, res) {
     //    year = '2022';
@@ -203,9 +193,7 @@ app.post('/ajaxtoggledays', function (req, res) {
         str += "'" + e + "',";
     })
     str = str.substring(0, str.length - 1) + "]";
-    //    var sql = "SELECT id FROM kalender WHERE html_id IN ('day-2022-1-15-2-6', 'day-2022-1-16-2-7');";
     var sql = "UPDATE brugere SET calendar=" + str + " WHERE id=" + update.userid + ";"
-    //var sql = "SELECT id FROM kalender WHERE html_id IN " + str + ";";
     console.log(sql);
     pool.query(sql, (err, result) => {
         if (!err) {
@@ -235,9 +223,10 @@ async function ajaxqueryplankalender_handler(req, res) {
         "monthmap": [],
         "planmap" : [],
         "kalender": [],
-        "brugermap": []
+        "brugermap": [],
+        "dateid": ''
     };
-    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
+    var sql = "SELECT dateid, calendar FROM planer WHERE id=" + req.body.planid + ";";
     let plankalender;
     try {
         const { rows } = await pool.query(sql);
@@ -248,6 +237,8 @@ async function ajaxqueryplankalender_handler(req, res) {
         return res.status(500).send();
     }
     svar.planmap = plankalender[0].calendar;
+    svar.dateid = plankalender[0].dateid;
+    console.log("svar:" + svar.dateid);
     
     sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
     let kalenderen;
@@ -327,6 +318,48 @@ function updatePlanCalender(planid, map) {
     });
 }
 
+async function ajaxsetpin_handler(req, res){
+    var svar = {
+        "fromdateid": '',
+        "todateid" : ''
+    };
+
+    sql = "SELECT dateid, calendar FROM planer WHERE id=" + req.body.planid + ";"
+    let kalenderen;
+    try {
+        const { rows } = await pool.query(sql);
+        kalenderen = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    svar.kalender = kalenderen;
+
+    if (kalenderen[0].calendar.indexOf(req.body.dateid) !== -1){
+        if (req.body.dateid === kalenderen[0].dateid){
+            svar.fromdateid = req.body.dateid;
+        }
+        else{
+            svar.fromdateid = kalenderen[0].dateid;
+            svar.todateid = req.body.dateid;
+        }
+        sql = "UPDATE planer SET dateid='" + svar.todateid + "' WHERE id=" + req.body.planid + ";"
+        try {
+            const { rows } = await pool.query(sql);
+        }
+        catch {
+            console.log('ERROR :' + sql);
+            return res.status(500).send();
+        }
+    }
+    return res.send(svar);
+}
+
+app.post('/ajaxsetpin', function (req, res) {
+    ajaxsetpin_handler(req, res);
+});
+
 app.post('/ajaxtoggleplandays', function (req, res) {
     var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";"
     pool.query(sql, (err, result) => {
@@ -375,7 +408,6 @@ function updateBrugerCalender(userid, map) {
 
 app.post('/ajaxtogglebrugerdays', function (req, res) {
     var sql = "SELECT calendar FROM brugere WHERE id=" + req.body.userid + ";"
-    console.log(sql);
     pool.query(sql, (err, result) => {
         if (!err) {
             if (result.rowCount == 1) {
@@ -414,7 +446,7 @@ app.post('/ajaxquerybrugere', function (req, res) {
 });
 
 app.post('/ajaxqueryplaner', function (req, res) {
-    pool.query("SELECT id, name, type, final_date FROM planer ORDER BY final_date;", (err, result) => {
+    pool.query("SELECT id, name, type, final_date, dateid FROM planer ORDER BY dateid;", (err, result) => {
         if (!err) {
             res.send(result.rows);
         }
@@ -428,9 +460,10 @@ async function ajaxquerymode3kalender_handler(req, res) {
         "planmap" : [],
         "kalender": [],
         "brugermap": [],
-        "heatmap": []
+        "heatmap": [],
+        "dateid": ''
     };
-    var sql = "SELECT calendar FROM planer WHERE id=" + req.body.planid + ";";
+    var sql = "SELECT dateid, calendar FROM planer WHERE id=" + req.body.planid + ";";
     let plankalender;
     try {
         const { rows } = await pool.query(sql);
@@ -449,6 +482,7 @@ async function ajaxquerymode3kalender_handler(req, res) {
         }
         svar.planmap.push(r);
     });
+    svar.dateid = kalender[0].dateid;
 
     var where = "";
     svar.monthmap.forEach(d => {
