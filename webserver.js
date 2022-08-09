@@ -153,7 +153,8 @@ app.get('/qw', function (req, res) {
 app.get('/', function (req, res) {
     //    year = '2022';
     //    renderGUI(res, year, 0);
-    var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
+//    var file = path.join(dir, req.path.replace(/\/$/, '/whka.html'));
+    var file = path.join(dir, req.path.replace(/\/$/, '/v3.html'));
     if (file.indexOf(dir + path.sep) !== 0) {
         return res.status(403).end('Forbidden');
     }
@@ -215,6 +216,32 @@ app.post('/ajaxtoggledays', function (req, res) {
             }
           });
     */
+});
+
+async function ajaxqueryv3kalender_handler(req, res) {
+
+    var svar = {
+        "monthmap": [],
+        "planmap" : [],
+        "kalender": [],
+        "brugermap": [],
+        "heatmap": [],
+        "dateid": ''
+    };
+    sql = "SELECT * FROM kalender WHERE year=2022 ORDER BY year,month,day,weeknumber,weekday;";
+    try {
+        const { rows } = await pool.query(sql);
+        svar.kalender = rows;
+    }
+    catch {
+        console.log('ERROR :' + sql);
+        return res.status(500).send();
+    }
+    return res.send(svar);
+}
+
+app.post('/ajaxqueryv3kalender', function (req, res) {
+    ajaxqueryv3kalender_handler(req, res);
 });
 
 async function ajaxqueryplankalender_handler(req, res) {
